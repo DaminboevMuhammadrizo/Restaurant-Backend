@@ -1,0 +1,145 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum UserRole {
+    SUPERADMIN
+    MANAGER
+    AFITSANT
+    CHEF
+    KASSA
+}
+
+enum OrderStatus {
+    PENDING
+    SUCCESS
+    CANCELED
+}
+
+model Company {
+    id          String  @id @default(uuid())
+    name        String
+    phone       String
+    founderName String
+    logo        String?
+    bio         String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    branch Branch[]
+    user   User[]
+}
+
+model Branch {
+    id        String  @id @default(uuid())
+    name      String  @unique
+    addres    String?
+    companyId String
+
+    company Company @relation(fields: [companyId], references: [id])
+
+    user            User[]
+    room            Room[]
+    productCategory ProductCategory[]
+    product         Product[]
+    order           Order[]
+    orderItem       OrderItem[]
+}
+
+model User {
+    id         String   @id @default(uuid())
+    firstName  String
+    lastName   String
+    phoneNumer String   @unique
+    password   String
+    role       UserRole
+    companyId  String?
+    branchId   String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    company Company? @relation(fields: [companyId], references: [id])
+    branch  Branch?  @relation(fields: [branchId], references: [id])
+
+    order Order[]
+}
+
+model Room {
+    id       String @id @default(uuid())
+    name     String
+    branchId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    branch Branch @relation(fields: [branchId], references: [id])
+
+    order Order[]
+}
+
+model ProductCategory {
+    id       String @id @default(uuid())
+    name     String
+    branchId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    branch Branch @relation(fields: [branchId], references: [id])
+
+    product Product[]
+}
+
+model Product {
+    id                String @id @default(ulid())
+    name              String
+    desc              String
+    price             Float
+    branchId          String
+    productCategoryId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    productCategory ProductCategory @relation(fields: [productCategoryId], references: [id])
+    branch          Branch          @relation(fields: [branchId], references: [id])
+
+    orderItem OrderItem[]
+}
+
+model Order {
+    id        String      @id @default(uuid())
+    userId    String
+    roomId    String
+    endAt     DateTime
+    branchId  String
+    status    OrderStatus
+    createdAt DateTime    @default(now())
+
+    user User @relation(fields: [userId], references: [id])
+    room Room @relation(fields: [roomId], references: [id])
+
+    branch Branch @relation(fields: [branchId], references: [id])
+
+    orderItem OrderItem[]
+}
+
+model OrderItem {
+    id        String @id @default(ulid())
+    orderId   String
+    productId String
+    branchId  String
+    count     Int
+
+    createdAt DateTime @default(now())
+
+    order   Order   @relation(fields: [orderId], references: [id])
+    product Product @relation(fields: [productId], references: [id])
+    branch  Branch  @relation(fields: [branchId], references: [id])
+}
