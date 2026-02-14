@@ -1,9 +1,4 @@
-import {
-    BadRequestException,
-    ForbiddenException,
-    Injectable,
-    NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { getAllBranchDto } from './dto/getAll.dto';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
@@ -14,7 +9,6 @@ import { Status, UserRole } from '@prisma/client';
 @Injectable()
 export class BranchService {
     constructor(private readonly prisma: PrismaService) { }
-
 
     async getAll(query: getAllBranchDto, currentUser: JwtPayload) {
         const { search, offcet = 0, limit = 10 } = query;
@@ -53,7 +47,6 @@ export class BranchService {
 
         return branch;
     }
-
 
 
     async getMy(currnetUser: JwtPayload) {
@@ -130,7 +123,6 @@ export class BranchService {
     }
 
 
-
     async delete(id: string, currentUser: JwtPayload) {
         const branch = await this.prisma.branch.findUnique({ where: { id } });
         if (!branch) throw new NotFoundException('Branch not found');
@@ -140,5 +132,4 @@ export class BranchService {
 
         return this.prisma.branch.delete({ where: { id } });
     }
-
 }

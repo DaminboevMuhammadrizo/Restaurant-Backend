@@ -72,6 +72,16 @@ export class BranchController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Patch('sattus/:id')
+    toggleStatus(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.service.toggleStatus(id, req['user'])
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
     @Delete(':id')
     delete(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
         return this.service.delete(id, req['user'])
