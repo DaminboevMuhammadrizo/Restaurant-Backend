@@ -20,10 +20,15 @@ enum OrderStatus {
     CANCELED
 }
 
+enum Status {
+    ACTIVE
+    INACTIVE
+}
+
 model Company {
     id          String  @id @default(uuid())
     name        String
-    phone       String
+    phone       String  @unique
     founderName String
     logo        String?
     bio         String?
@@ -40,8 +45,12 @@ model Branch {
     name      String  @unique
     addres    String?
     companyId String
+    status    Status  @default(ACTIVE)
 
-    company Company @relation(fields: [companyId], references: [id])
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
 
     user            User[]
     room            Room[]
@@ -57,15 +66,16 @@ model User {
     lastName   String
     phoneNumer String   @unique
     password   String
-    role       UserRole
     companyId  String?
     branchId   String?
+    status     Status   @default(ACTIVE)
+    role       UserRole
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    company Company? @relation(fields: [companyId], references: [id])
-    branch  Branch?  @relation(fields: [branchId], references: [id])
+    company Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
+    branch  Branch?  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
     order Order[]
 }
@@ -78,7 +88,7 @@ model Room {
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    branch Branch @relation(fields: [branchId], references: [id])
+    branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
     order Order[]
 }
@@ -87,11 +97,12 @@ model ProductCategory {
     id       String @id @default(uuid())
     name     String
     branchId String
+    status   Status @default(ACTIVE)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    branch Branch @relation(fields: [branchId], references: [id])
+    branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
     product Product[]
 }
@@ -103,12 +114,13 @@ model Product {
     price             Float
     branchId          String
     productCategoryId String
+    status            Status @default(ACTIVE)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
-    productCategory ProductCategory @relation(fields: [productCategoryId], references: [id])
-    branch          Branch          @relation(fields: [branchId], references: [id])
+    productCategory ProductCategory @relation(fields: [productCategoryId], references: [id], onDelete: Cascade)
+    branch          Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
     orderItem OrderItem[]
 }
@@ -122,10 +134,9 @@ model Order {
     status    OrderStatus
     createdAt DateTime    @default(now())
 
-    user User @relation(fields: [userId], references: [id])
-    room Room @relation(fields: [roomId], references: [id])
-
-    branch Branch @relation(fields: [branchId], references: [id])
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+    room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade)
+    branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
     orderItem OrderItem[]
 }
@@ -139,7 +150,7 @@ model OrderItem {
 
     createdAt DateTime @default(now())
 
-    order   Order   @relation(fields: [orderId], references: [id])
-    product Product @relation(fields: [productId], references: [id])
-    branch  Branch  @relation(fields: [branchId], references: [id])
+    order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+    product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+    branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }

@@ -12,11 +12,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
         });
 
         this.redis_client.on('connect', () => {
-            console.log('✅ Redis connected');
+            console.log("\x1b[32m%s\x1b[0m", '[Redis] connected');
         });
 
         this.redis_client.on('error', (err) => {
-            console.error('❌ Redis error:', err);
+            console.error("\x1b[31m%s\x1b[0m", '[Redis] error:', err);
         });
     }
 

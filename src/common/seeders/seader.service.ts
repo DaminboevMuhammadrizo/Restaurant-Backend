@@ -1,57 +1,54 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { PrismaService } from "../Database/prisma.service";
-import { UserRole } from "@prisma/client";
 import { hashPassword } from "../config/bcrypt";
+import { UserRole, Status } from "@prisma/client";
 
 @Injectable()
 export class SeederService implements OnModuleInit {
     constructor(private readonly prisma: PrismaService) { }
 
     async onModuleInit() {
-        await this.seedSuperAdmin();
-    }
-
-    async seedSuperAdmin() {
         try {
-            const superAdminData = {
-                fullName: "Muhammadrizo",
-                phone: "+998335242981",
-                role: UserRole.SUPERADMIN,
-                password: "password",
-            };
-
-            const hashedPassword = await hashPassword(superAdminData.password);
-
-            const existingAdmin = await this.prisma.user.findFirst({
-                where: {
-                    phone: superAdminData.phone,
-                    role: UserRole.SUPERADMIN,
-                },
+            let company = await this.prisma.company.findUnique({
+                where: { phone: "+998335242981" },
             });
 
-            if (!existingAdmin) {
-                const admin = await this.prisma.user.create({
+            if (!company) {
+                company = await this.prisma.company.create({
                     data: {
-                        fullName: superAdminData.fullName,
-                        phone: superAdminData.phone,
-                        role: superAdminData.role,
-                        password: hashedPassword,
+                        name: "D.M",
+                        phone: "+998335242981",
+                        founderName: "Muhammadrioz Daminboev",
                     },
                 });
-
-                console.log("\x1b[32m%s\x1b[0m", "✅ [Seeder]: SuperAdmin yaratildi");
-
-                console.table({
-                    ID: admin.id,
-                    Name: admin.fullName,
-                    Phone: admin.phone,
-                    Role: admin.role,
-                });
+                console.log("\x1b[32m%s\x1b[0m", "[Seeder]: Company yaratildi ✅");
             } else {
-                console.log("\x1b[36m%s\x1b[0m", "ℹ️ [Seeder]: SuperAdmin allaqachon mavjud");
+                console.log("\x1b[36m%s\x1b[0m", "[Seeder]: Company allaqachon mavjud");
+            }
+
+            const superAdmin = await this.prisma.user.findFirst({
+                where: { role: UserRole.SUPERADMIN, companyId: company.id },
+            });
+
+            if (!superAdmin) {
+                const hashedPassword = await hashPassword("password");
+                await this.prisma.user.create({
+                    data: {
+                        firstName: "Muhammadrioz",
+                        lastName: "Daminboev",
+                        phoneNumer: "+998335242981",
+                        password: hashedPassword,
+                        role: UserRole.SUPERADMIN,
+                        companyId: company.id,
+                        branchId: null,
+                    },
+                });
+                console.log("\x1b[32m%s\x1b[0m", "[Seeder]: SuperAdmin yaratildi ✅");
+            } else {
+                console.log("\x1b[36m%s\x1b[0m", "[Seeder]: SuperAdmin allaqachon mavjud");
             }
         } catch (error) {
-            console.error("\x1b[31m%s\x1b[0m", "❌ [Seeder Error]:", error);
+            console.error("\x1b[31m%s\x1b[0m", "[Seeder Error]:", error.message);
         }
     }
 }
