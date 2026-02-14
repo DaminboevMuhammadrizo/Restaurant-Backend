@@ -4,6 +4,8 @@ import { getAllusersQuery } from './dto/getAll.dto';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { Status, UserRole } from '@prisma/client';
 import { getUsersMeQuery } from './dto/get-me-users.dto';
+import { CreteManagerDto } from './dto/create-manager.dto';
+import { UpdateManagerDto } from './dto/update-manager.dto';
 
 @Injectable()
 export class UserService {
@@ -80,4 +82,13 @@ export class UserService {
 
         return { total, offcet, limit, data };
     }
+
+
+    async createManager(payload: CreteManagerDto) { }
+
+
+    async updateManager(id: string, payload: UpdateManagerDto) { }
+
+
+    async deleteManager(id: string) { }
 }
