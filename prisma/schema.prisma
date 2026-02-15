@@ -97,6 +97,7 @@ model ProductCategory {
     id       String @id @default(uuid())
     name     String
     branchId String
+    icon     String?
     status   Status @default(ACTIVE)
 
     createdAt DateTime @default(now())

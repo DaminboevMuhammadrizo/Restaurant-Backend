@@ -20,8 +20,8 @@ export class CompanyController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN)
     @Get('all')
-    getAll(@Query() query: GetAllComapnyQuery, @Req() req: Request) {
-        return this.service.getAll(query, req['user'])
+    getAll(@Query() query: GetAllComapnyQuery) {
+        return this.service.getAll(query)
     }
 
 
@@ -40,8 +40,8 @@ export class CompanyController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN)
     @Get('one/:id')
-    getOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
-        return this.service.getOne(id, req['user'])
+    getOne(@Param('id', ParseUUIDPipe) id: string) {
+        return this.service.getOne(id)
     }
 
 
@@ -69,10 +69,9 @@ export class CompanyController {
     @Post()
     create(
         @Body() payload: CreateCompanyDto,
-        @Req() req: Request,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        return this.service.create(payload, file || null, req['user'])
+        return this.service.create(payload, file)
     }
 
 
@@ -103,7 +102,7 @@ export class CompanyController {
         @Req() req: Request,
         @UploadedFile() file: Express.Multer.File
     ) {
-        return this.service.update(id, payload, file || null, req['user'])
+        return this.service.update(id, payload, file || null)
     }
 
 
@@ -116,6 +115,6 @@ export class CompanyController {
         @Param('id', ParseUUIDPipe) id: string,
         @Req() req: Request
     ) {
-        return this.service.delete(id, req['user'])
+        return this.service.delete(id)
     }
 }

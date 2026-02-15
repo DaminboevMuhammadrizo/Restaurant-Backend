@@ -14,7 +14,7 @@ export class CompanyService {
     constructor(private readonly prisma: PrismaService) { }
 
 
-    async getAll(query: GetAllComapnyQuery, currentUser: JwtPayload) {
+    async getAll(query: GetAllComapnyQuery) {
         const { search, offcet = 0, limit = 10 } = query;
 
         const where: any = search
@@ -52,14 +52,14 @@ export class CompanyService {
     }
 
 
-    async getOne(id: string, currentUser: JwtPayload) {
+    async getOne(id: string) {
         const company = await this.prisma.company.findUnique({ where: { id } });
         if (!company) throw new NotFoundException('Company not found');
         return company;
     }
 
 
-    async create(payload: CreateCompanyDto, file: any | null, currentUser: JwtPayload) {
+    async create(payload: CreateCompanyDto, file?: Express.Multer.File) {
         const existing = await this.prisma.company.findUnique({ where: { phone: payload.phone } });
         if (existing) throw new BadRequestException('Company phone already exists');
         return this.prisma.company.create({ data: payload });
@@ -67,8 +67,8 @@ export class CompanyService {
 
 
 
-    async update(id: string, payload: UpdateCompanyDto, file: any | null, currentUser: JwtPayload) {
-        const company = await this.getOne(id, currentUser);
+    async update(id: string, payload: UpdateCompanyDto, file: any | null) {
+        const company = await this.getOne(id);
 
         if (payload.phone && payload.phone !== company.phone) {
             const existing = await this.prisma.company.findUnique({ where: { phone: payload.phone } });
@@ -78,8 +78,8 @@ export class CompanyService {
     }
 
 
-    async delete(id: string, currentUser: JwtPayload) {
-        await this.getOne(id, currentUser);
+    async delete(id: string) {
+        await this.getOne(id);
         return this.prisma.company.delete({ where: { id }, select: { id: true } });
     }
 }
