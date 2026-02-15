@@ -23,6 +23,5 @@ export class UpdateManagerDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsString()
-    @MinLength(6)
     password?: string
 }

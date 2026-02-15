@@ -11,6 +11,7 @@ import { JwtModules } from './common/config/jwt/jwt.module';
 import { JwtModule } from '@nestjs/jwt';
 import { CompanyModule } from './modules/company/company.module';
 import { BranchModule } from './modules/branch/branch.module';
+import { ProductModule } from './modules/product/product.module';
 
 @Module({
     imports: [
@@ -30,6 +31,7 @@ import { BranchModule } from './modules/branch/branch.module';
         }),
         ConfigModule,
         JwtModule.register({ global: true }),
+        ProductModule,
 
     ],
 })

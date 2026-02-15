@@ -1,7 +1,8 @@
 import { ApiProperty } from "@nestjs/swagger"
-import { IsMobilePhone, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator"
+import { UserRole } from "@prisma/client"
+import { IsEnum, IsMobilePhone, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator"
 
-export class CreteManagerDto {
+export class CreteUserDto {
 
     @ApiProperty()
     @IsString()
@@ -21,8 +22,12 @@ export class CreteManagerDto {
     @IsString()
     password: string
 
+    @ApiProperty({ enum: UserRole })
+    @IsEnum(UserRole)
+    role: UserRole
+
     @ApiProperty()
     @IsUUID()
     @IsOptional()
-    companyId?: string
+    branchId?: string
 }

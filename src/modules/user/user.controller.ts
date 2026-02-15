@@ -9,6 +9,8 @@ import { getAllusersQuery } from './dto/getAll.dto';
 import { getUsersMeQuery } from './dto/get-me-users.dto';
 import { CreteManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
+import { CreteUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto copy';
 
 @Controller('user')
 export class UserController {
@@ -62,31 +64,38 @@ export class UserController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN)
-    @Delete('manager/:id')
-    deleteManager(@Param('id', ParseUUIDPipe) id: string) {
-        return this.service.deleteManager(id)
+    @Patch('manager/status/:id')
+    toggleManager(@Param('id', ParseUUIDPipe) id: string) {
+        return this.service.toggleManager(id)
     }
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+
+    @ApiOperation({ summary: `${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Roles(UserRole.MANAGER)
     @Post()
-    createUser() { }
+    createUser(@Body() payload: CreteUserDto, @Req() req: Request) {
+        return this.service.createUser(payload, req['user'])
+    }
 
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiOperation({ summary: `${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Roles(UserRole.MANAGER)
     @Patch(':id')
-    updateUser() { }
+    updateUser(@Param('id', ParseUUIDPipe) id: string, @Body() payload: UpdateUserDto, @Req() req: Request) {
+        return this.service.updateUser(id, payload, req['user'])
+    }
 
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiOperation({ summary: `${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
-    @Delete(':id')
-    deleteUser() { }
+    @Roles(UserRole.MANAGER)
+    @Patch('status/:id')
+    toggleUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.service.toggleUser(id, req['user'])
+    }
 }

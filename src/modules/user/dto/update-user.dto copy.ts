@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger"
 import { IsMobilePhone, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator"
 
-export class CreteManagerDto {
+export class UpdateUserDto {
 
     @ApiProperty()
     @IsString()
@@ -20,9 +20,4 @@ export class CreteManagerDto {
     @ApiProperty()
     @IsString()
     password: string
-
-    @ApiProperty()
-    @IsUUID()
-    @IsOptional()
-    companyId?: string
 }
