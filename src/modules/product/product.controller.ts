@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { UnitType, UserRole } from '@prisma/client';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
@@ -9,6 +9,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { fileStorages } from 'src/common/types/upload_types';
 import { CreateProductDto } from './dto/create.dto';
 import { UpdateProductDto } from './dto/update.dto';
+import { GetProductDto } from './dto/get.dto';
 
 
 @Controller('product')
@@ -22,9 +23,10 @@ export class ProductController {
     @Get('all/manager/:branchId')
     getAllForManager(
         @Param('branchId', ParseUUIDPipe) branchId: string,
+        @Query() query: GetProductDto,
         @Req() req: Request
     ) {
-        // return this.service.getAllForManager(branchId, req['user']);
+        return this.service.getAllForManager(branchId, req['user'], query);
     }
 
 
@@ -33,8 +35,8 @@ export class ProductController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.CHEF, UserRole.AFITSANT, UserRole.KASSA)
     @Get('all')
-    getAll(@Req() req: Request) {
-        // return this.service.getAll(req['user']);
+    getAll(@Req() req: Request, @Query() query: GetProductDto) {
+        return this.service.getAll(req['user'], query);
     }
 
 
@@ -66,7 +68,7 @@ export class ProductController {
         @Req() req: Request,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        // return this.service.create(payload, req['user'], file);
+        return this.service.create(payload, req['user'], file);
     }
 
 
@@ -101,7 +103,7 @@ export class ProductController {
         @Req() req: Request,
         @UploadedFile() file?: Express.Multer.File
     ) {
-        // return this.service.update(id, payload, req['user'], file);
+        return this.service.update(id, payload, req['user'], file);
     }
 
 
@@ -114,7 +116,7 @@ export class ProductController {
         @Param('id', ParseUUIDPipe) id: string,
         @Req() req: Request
     ) {
-        // return this.service.toggleStatus(id, req['user']);
+        return this.service.toggleStatus(id, req['user']);
     }
 
 
@@ -127,6 +129,6 @@ export class ProductController {
         @Param('id', ParseUUIDPipe) id: string,
         @Req() req: Request
     ) {
-        // return this.service.delete(id, req['user']);
+        return this.service.delete(id, req['user']);
     }
 }
