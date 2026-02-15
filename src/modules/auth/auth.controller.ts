@@ -5,12 +5,17 @@ import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor (private readonly authService: AuthService) {}
+    constructor(private readonly authService: AuthService) { }
 
+    @ApiOperation({})
+    @Post('test')
+    test() {
+        return 'ishladi!'
+    }
 
     @ApiOperation({})
     @Post('login')
-    login (@Body() payload: LoginDto) {
+    login(@Body() payload: LoginDto) {
         return this.authService.login(payload)
     }
 }
