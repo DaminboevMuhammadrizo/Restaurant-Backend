@@ -32,7 +32,6 @@ import { ProductModule } from './modules/product/product.module';
         ConfigModule,
         JwtModule.register({ global: true }),
         ProductModule,
-
     ],
 })
 export class AppModule { }
