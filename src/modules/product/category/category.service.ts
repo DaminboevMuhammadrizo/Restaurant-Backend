@@ -80,10 +80,18 @@ export class CategoryService {
     }
 
 
-    async delete(id: string, currnetUser: JwtPayload) {
-        const category = await this.prisma.productCategory.findUnique({ where: { id } })
-        if (!category) throw new NotFoundException('Category not found !')
-        await this.checkBranch(category.branchId, currnetUser)
-        return await this.prisma.productCategory.delete({ where: { id } })
+    async delete(id: string, currentUser: JwtPayload) {
+        const category = await this.prisma.productCategory.findUnique({ where: { id } });
+        if (!category) throw new NotFoundException('Category not found!');
+        await this.checkBranch(category.branchId, currentUser);
+
+        if (category.icon) {
+            const safeName = basename(category.icon);
+            const filePath = join(getPathInFileType(safeName), safeName);
+            if (existsSync(filePath)) {
+                await fs.unlink(filePath);
+            }
+        }
+        return await this.prisma.productCategory.delete({ where: { id } });
     }
 }
