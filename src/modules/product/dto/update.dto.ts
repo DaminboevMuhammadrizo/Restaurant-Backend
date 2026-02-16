@@ -1,5 +1,6 @@
 import { ApiPropertyOptional } from "@nestjs/swagger"
 import { UnitType } from "@prisma/client"
+import { Type } from "class-transformer"
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from "class-validator"
 
 export class UpdateProductDto {
@@ -19,11 +20,13 @@ export class UpdateProductDto {
     @ApiPropertyOptional()
     @IsOptional()
     @IsNumber()
+    @Type(() => Number)
     price?: number
 
     @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
+    @Type(() => Number)
     amount?: number
 
     @ApiPropertyOptional({ enum: Object.values(UnitType) })

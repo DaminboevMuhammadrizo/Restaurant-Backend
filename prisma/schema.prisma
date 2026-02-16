@@ -122,7 +122,7 @@ model ProductCategory {
 }
 
 model Product {
-    id                String   @id @default(ulid())
+    id                String   @id @default(uuid())
     name              String
     desc              String?
     price             Float
@@ -159,7 +159,7 @@ model Order {
 }
 
 model OrderItem {
-    id        String @id @default(ulid())
+    id        String @id @default(uuid())
     orderId   String
     productId String
     branchId  String

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
 import { UnitType } from "@prisma/client"
+import { Type } from "class-transformer"
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, IsUUID, MaxLength } from "class-validator"
 
 export class CreateProductDto {
@@ -17,10 +18,12 @@ export class CreateProductDto {
 
     @ApiProperty()
     @IsNumber()
+    @Type(() => Number)
     price: number
 
     @ApiProperty()
     @IsInt()
+    @Type(() => Number)
     amount: number
 
     @ApiProperty({ enum: Object.values(UnitType) })
