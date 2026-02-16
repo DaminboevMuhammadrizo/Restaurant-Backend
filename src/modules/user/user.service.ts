@@ -93,7 +93,7 @@ export class UserService {
             throw new NotFoundException('Company not found !')
 
         const existsUser = await this.prisma.user.findUnique({ where: { phoneNumer: payload.phoneNumer } })
-        if (!existsUser)
+        if (existsUser)
             throw new ConflictException('Phone alredy exists !')
 
         return await this.prisma.user.create({
