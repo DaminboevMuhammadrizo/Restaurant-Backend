@@ -12,6 +12,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { CompanyModule } from './modules/company/company.module';
 import { BranchModule } from './modules/branch/branch.module';
 import { ProductModule } from './modules/product/product.module';
+import { RoomModule } from './modules/room/room.module';
 
 @Module({
     imports: [
@@ -32,6 +33,7 @@ import { ProductModule } from './modules/product/product.module';
         ConfigModule,
         JwtModule.register({ global: true }),
         ProductModule,
+        RoomModule,
     ],
 })
 export class AppModule { }

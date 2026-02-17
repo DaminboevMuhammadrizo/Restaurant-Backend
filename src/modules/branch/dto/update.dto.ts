@@ -1,5 +1,5 @@
-import { ApiPropertyOptional } from "@nestjs/swagger"
-import { IsOptional, IsString, IsUUID } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { IsNumber, IsOptional, IsString, IsUUID } from "class-validator"
 
 export class UpdateBranchDto {
 
@@ -18,4 +18,9 @@ export class UpdateBranchDto {
     @IsUUID()
     @IsOptional()
     companyId?: string
+
+    @ApiProperty()
+    @IsNumber()
+    @IsOptional()
+    kpi?: number
 }

@@ -12,6 +12,7 @@ enum UserRole {
     AFITSANT
     CHEF
     KASSA
+    SUPER_AFITSANT
 }
 
 enum OrderStatus {
@@ -58,6 +59,7 @@ model Branch {
     name      String  @unique
     addres    String?
     companyId String
+    kpi       Float?
     status    Status  @default(ACTIVE)
 
     createdAt DateTime @default(now())
@@ -67,10 +69,12 @@ model Branch {
 
     user            User[]
     room            Room[]
-    productCategory ProductCategory[]
-    product         Product[]
     order           Order[]
+    product         Product[]
     orderItem       OrderItem[]
+    roomCategory    RoomCategory[]
+    productCategory ProductCategory[]
+    popularProducts PopularProducts[]
 }
 
 model User {
@@ -93,17 +97,31 @@ model User {
     order Order[]
 }
 
-model Room {
+model RoomCategory {
     id       String @id @default(uuid())
     name     String
     branchId String
+    status   Status @default(ACTIVE)
+
+    room   Room[]
+    branch Branch @relation(fields: [branchId], references: [id])
+}
+
+model Room {
+    id             String @id @default(uuid())
+    name           String
+    price          Float
+    branchId       String
+    roomCategoryId String
+    status         Status @default(ACTIVE)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-    order Order[]
+    order        Order[]
+    roomCategory RoomCategory @relation(fields: [roomCategoryId], references: [id])
 }
 
 model ProductCategory {
@@ -139,7 +157,16 @@ model Product {
     productCategory ProductCategory @relation(fields: [productCategoryId], references: [id], onDelete: Cascade)
     branch          Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
 
-    orderItem OrderItem[]
+    orderItem       OrderItem[]
+    popularProducts PopularProducts[]
+}
+
+model PopularProducts {
+    id        String   @id @default(uuid())
+    product   Product? @relation(fields: [productId], references: [id])
+    productId String?
+    branch    Branch?  @relation(fields: [branchId], references: [id])
+    branchId  String?
 }
 
 model Order {

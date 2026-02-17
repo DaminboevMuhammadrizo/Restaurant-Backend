@@ -76,6 +76,7 @@ export class BranchService {
                 name: payload.name,
                 addres: payload.addres,
                 companyId,
+                kpi: payload.kpi,
             },
         });
     }
@@ -104,6 +105,7 @@ export class BranchService {
                 name: payload.name,
                 addres: payload.addres,
                 companyId,
+                kpi: payload.kpi
             },
         });
     }
