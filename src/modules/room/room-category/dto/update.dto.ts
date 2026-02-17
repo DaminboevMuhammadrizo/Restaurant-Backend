@@ -1,10 +1,9 @@
-import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
-import { CreateRoomCategoryDto } from "./carete.dto";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsOptional, IsString } from "class-validator";
 
-export class UpdateRoomcategoryDto extends PartialType(CreateRoomCategoryDto) {
+export class UpdateRoomcategoryDto {
     @ApiPropertyOptional()
     @IsString()
     @IsOptional()
-    name?: string | undefined;
+    name?: string;
 }

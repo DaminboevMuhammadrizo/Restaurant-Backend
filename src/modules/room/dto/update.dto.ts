@@ -1,8 +1,7 @@
-import { PartialType, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsNumber } from "class-validator";
-import { CreateRoomDto } from "./create.dto";
+import { ApiPropertyOptional, ApiProperty } from "@nestjs/swagger";
+import { IsString, IsNumber, IsUUID } from "class-validator";
 
-export class UpdateRoomDto extends PartialType(CreateRoomDto) {
+export class UpdateRoomDto {
 
     @ApiPropertyOptional()
     @IsString()
@@ -11,4 +10,8 @@ export class UpdateRoomDto extends PartialType(CreateRoomDto) {
     @ApiPropertyOptional()
     @IsNumber()
     price?: number;
+
+    @ApiProperty()
+    @IsUUID()
+    roomCategoryId: string;
 }
