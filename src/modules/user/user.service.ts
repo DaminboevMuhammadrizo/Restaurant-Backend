@@ -141,7 +141,7 @@ export class UserService {
 
         if (payload.phoneNumer && existsUser.phoneNumer !== payload.phoneNumer) {
             const existsPhone = await this.prisma.user.findUnique({ where: { phoneNumer: payload.phoneNumer } })
-            if (!existsPhone)
+            if (existsPhone)
                 throw new ConflictException('Phone alredy exists !')
         }
 

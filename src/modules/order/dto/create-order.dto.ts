@@ -1,6 +1,5 @@
-import { IsUUID, IsDateString, IsEnum, IsArray, ValidateNested, ArrayMinSize, IsInt, Min } from 'class-validator';
+import { IsUUID, IsArray, ValidateNested, ArrayMinSize, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { OrderStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';
 
 class OrderItemDto {
@@ -17,15 +16,7 @@ class OrderItemDto {
 export class CreateOrderDto {
     @ApiProperty()
     @IsUUID()
-    userId: string;
-
-    @ApiProperty()
-    @IsUUID()
     roomId: string;
-
-    @ApiProperty()
-    @IsUUID()
-    branchId: string;
 
     @IsArray()
     @ArrayMinSize(1)

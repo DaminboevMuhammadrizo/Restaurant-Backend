@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Order" ALTER COLUMN "endAt" DROP NOT NULL;
