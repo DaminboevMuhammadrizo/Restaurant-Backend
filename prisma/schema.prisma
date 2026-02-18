@@ -176,7 +176,7 @@ model Order {
     userId    String
     roomId    String
     branchId  String
-    endAt     DateTime
+    endAt     DateTime?
     status    OrderStatus
     createdAt DateTime    @default(now())
 

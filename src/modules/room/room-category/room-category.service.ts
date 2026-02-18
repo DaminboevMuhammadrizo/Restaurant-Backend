@@ -18,13 +18,13 @@ export class RoomCategoryService {
 
     async getAllForManager(branchId: string, currentUser: JwtPayload) {
         await this.checkBranch(branchId, currentUser)
-        return await this.prisma.roomCategory.findMany({ where: { branchId } })
+        return await this.prisma.roomCategory.findMany({ where: { branchId, status: Status.ACTIVE } })
     }
 
 
     async getAll(currentUser: JwtPayload) {
         await this.checkBranch(currentUser.branchId!, currentUser)
-        return await this.prisma.roomCategory.findMany({ where: { branchId: currentUser.branchId! } })
+        return await this.prisma.roomCategory.findMany({ where: { branchId: currentUser.branchId!, status: Status.ACTIVE } })
     }
 
 

@@ -21,12 +21,12 @@ export class CategoryService {
 
     async getAllForManager(branchId: string, currnetUser: JwtPayload) {
         await this.checkBranch(branchId, currnetUser)
-        return await this.prisma.productCategory.findMany({ where: { branchId } })
+        return await this.prisma.productCategory.findMany({ where: { branchId, status: Status.ACTIVE } })
     }
 
 
     async getAll(currnetUser: JwtPayload) {
-        return await this.prisma.productCategory.findMany({ where: { branchId: currnetUser.branchId! } })
+        return await this.prisma.productCategory.findMany({ where: { branchId: currnetUser.branchId!, status: Status.ACTIVE } })
     }
 
 

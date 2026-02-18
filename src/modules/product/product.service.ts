@@ -26,10 +26,11 @@ export class ProductService {
         await this.checkBranch(category.branchId, currentUser);
     }
 
+
     async getAllForManager(branchId: string, currentUser: JwtPayload, query: GetProductDto) {
         await this.checkBranch(branchId, currentUser);
 
-        const where: any = { branchId };
+        const where: any = { branchId, status: Status.ACTIVE };
         if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
         if (query.categoryId) where.productCategoryId = query.categoryId;
 
@@ -46,7 +47,7 @@ export class ProductService {
 
 
     async getAll(currentUser: JwtPayload, query: GetProductDto) {
-        const where: any = { branchId: currentUser.branchId! };
+        const where: any = { branchId: currentUser.branchId!, status: Status.ACTIVE };
         if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
         if (query.categoryId) where.productCategoryId = query.categoryId;
 

@@ -51,7 +51,7 @@ export class UserService {
         if (currentUser.role === UserRole.MANAGER) await this.checkBranch(branchId, currentUser);
 
         const { search, role, offcet = 0, limit = 10 } = query;
-        const where: any = { branchId };
+        const where: any = { branchId, status: Status.ACTIVE };
 
         if (search) {
             where.OR = [
@@ -92,7 +92,7 @@ export class UserService {
 
         const [data, total] = await this.prisma.$transaction([
             this.prisma.user.findMany({
-                where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT },
+                where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT, status: Status.ACTIVE },
                 orderBy: { createdAt: "desc" },
                 select: {
                     id: true,

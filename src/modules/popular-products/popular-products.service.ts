@@ -25,7 +25,7 @@ export class PopularProductsService {
         await this.checkBranch(branchId, currentUser);
 
         return await this.prisma.popularProducts.findMany({
-            where: { branchId },
+            where: { branchId, status: Status.ACTIVE },
             include: { product: true }
         });
     }
@@ -35,7 +35,7 @@ export class PopularProductsService {
         if (!currentUser.branchId) throw new ForbiddenException('Branch not found in token');
 
         return await this.prisma.popularProducts.findMany({
-            where: { branchId: currentUser.branchId },
+            where: { branchId: currentUser.branchId, status: Status.ACTIVE },
             include: { product: true }
         });
     }

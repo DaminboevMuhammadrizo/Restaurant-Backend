@@ -33,7 +33,8 @@ export class RoomService {
             where: {
                 branchId,
                 ...(roomCategoryId && { roomCategoryId }),
-                ...(search && { name: { contains: search, mode: 'insensitive' } })
+                ...(search && { name: { contains: search, mode: 'insensitive' } }),
+                status: Status.ACTIVE
             },
             include: { roomCategory: true }
         });
@@ -47,7 +48,8 @@ export class RoomService {
             where: {
                 branchId: currentUser.branchId!,
                 ...(roomCategoryId && { roomCategoryId }),
-                ...(search && { name: { contains: search, mode: 'insensitive' } })
+                ...(search && { name: { contains: search, mode: 'insensitive' } }),
+                status: Status.ACTIVE
             },
             include: { roomCategory: true }
         });

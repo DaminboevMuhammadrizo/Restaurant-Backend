@@ -40,7 +40,7 @@ export class BranchService {
 
 
     async getOne(id: string, currentUser: JwtPayload) {
-        const where: any = { id };
+        const where: any = { id, status: Status.ACTIVE };
         if (currentUser.role === UserRole.MANAGER) where.companyId = currentUser.companyId;
         const branch = await this.prisma.branch.findFirst({ where });
         if (!branch) throw new NotFoundException('Branch not found');
