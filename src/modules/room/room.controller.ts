@@ -30,12 +30,12 @@ export class RoomController {
     }
 
 
-    @ApiOperation({ summary: `${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
     @ApiQuery({ name: 'roomCategoryId', required: false, type: String })
     @ApiQuery({ name: 'search', required: false, type: String })
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
     @Get('all')
     getAll(
         @Req() req: Request,

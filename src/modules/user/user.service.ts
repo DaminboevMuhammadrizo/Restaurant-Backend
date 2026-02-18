@@ -87,6 +87,31 @@ export class UserService {
     }
 
 
+    async getWaiters(currentUser: JwtPayload) {
+        if (currentUser.role === UserRole.MANAGER) await this.checkBranch(currentUser.branchId!, currentUser);
+
+        const [data, total] = await this.prisma.$transaction([
+            this.prisma.user.findMany({
+                where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT },
+                orderBy: { createdAt: "desc" },
+                select: {
+                    id: true,
+                    firstName: true,
+                    lastName: true,
+                    phoneNumer: true,
+                    role: true,
+                    branchId: true,
+                    companyId: true,
+                    status: true,
+                },
+            }),
+            this.prisma.user.count({ where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT } }),
+        ]);
+
+        return { total, data };
+    }
+
+
     async createManager(payload: CreteManagerDto) {
         const company = await this.prisma.company.findUnique({ where: { id: payload.companyId } })
         if (!company)

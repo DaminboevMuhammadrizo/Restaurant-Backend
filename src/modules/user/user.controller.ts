@@ -40,6 +40,18 @@ export class UserController {
     }
 
 
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPER_AFITSANT)
+    @Get('waiters')
+    getWaiters(
+        @Req() req: Request
+    ) {
+        return this.service.getWaiters(req['user'])
+    }
+
+
     @ApiOperation({ summary: `${UserRole.SUPERADMIN}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)

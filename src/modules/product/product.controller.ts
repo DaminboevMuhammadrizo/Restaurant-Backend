@@ -30,10 +30,10 @@ export class ProductController {
     }
 
 
-    @ApiOperation({ summary: `${UserRole.CHEF}, ${UserRole.AFITSANT}, ${UserRole.KASSA}` })
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.CHEF, UserRole.AFITSANT, UserRole.KASSA)
+    @Roles(UserRole.CHEF, UserRole.AFITSANT, UserRole.SUPER_AFITSANT, UserRole.KASSA)
     @Get('all')
     getAll(@Req() req: Request, @Query() query: GetProductDto) {
         return this.service.getAll(req['user'], query);

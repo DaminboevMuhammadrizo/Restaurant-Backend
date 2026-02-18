@@ -24,10 +24,10 @@ export class CategoryController {
     }
 
 
-    @ApiOperation({ summary: `${UserRole.CHEF}, ${UserRole.AFITSANT}, ${UserRole.KASSA}` })
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.CHEF, UserRole.AFITSANT, UserRole.KASSA)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.CHEF, UserRole.AFITSANT, UserRole.KASSA)
     @Get('all')
     getAll(@Req() req: Request) {
         return this.service.getAll(req['user'])

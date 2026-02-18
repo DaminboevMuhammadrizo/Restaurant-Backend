@@ -13,6 +13,8 @@ import { CompanyModule } from './modules/company/company.module';
 import { BranchModule } from './modules/branch/branch.module';
 import { ProductModule } from './modules/product/product.module';
 import { RoomModule } from './modules/room/room.module';
+import { PopularProductsModule } from './modules/popular-products/popular-products.module';
+import { OrderModule } from './modules/order/order.module';
 
 @Module({
     imports: [
@@ -34,6 +36,8 @@ import { RoomModule } from './modules/room/room.module';
         JwtModule.register({ global: true }),
         ProductModule,
         RoomModule,
+        PopularProductsModule,
+        OrderModule,
     ],
 })
 export class AppModule { }

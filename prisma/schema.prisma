@@ -162,19 +162,21 @@ model Product {
 }
 
 model PopularProducts {
-    id        String   @id @default(uuid())
-    product   Product? @relation(fields: [productId], references: [id])
-    productId String?
-    branch    Branch?  @relation(fields: [branchId], references: [id])
-    branchId  String?
+    id        String @id @default(uuid())
+    productId String
+    branchId  String
+    status    Status @default(ACTIVE)
+
+    product Product? @relation(fields: [productId], references: [id])
+    branch  Branch   @relation(fields: [branchId], references: [id])
 }
 
 model Order {
     id        String      @id @default(uuid())
     userId    String
     roomId    String
-    endAt     DateTime
     branchId  String
+    endAt     DateTime
     status    OrderStatus
     createdAt DateTime    @default(now())
 
