@@ -77,8 +77,8 @@ export class OrderService {
     }
 
 
-    async create(createOrderDto: CreateOrderDto, currentUser: JwtPayload) {
-        const { roomId, orderItems } = createOrderDto;
+    async create(payload: CreateOrderDto, currentUser: JwtPayload) {
+        const { roomId, orderItems } = payload;
 
         const room = await this.prisma.room.findUnique({
             where: { id: roomId },
@@ -103,7 +103,7 @@ export class OrderService {
         const order = await this.prisma.$transaction(async (tx) => {
             const newOrder = await tx.order.create({
                 data: {
-                    userId: currentUser.id,
+                    userId: payload.waiterId,
                     roomId,
                     branchId,
                     status: OrderStatus.PENDING,

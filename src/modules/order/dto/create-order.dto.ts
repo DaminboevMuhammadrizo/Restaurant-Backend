@@ -18,6 +18,10 @@ export class CreateOrderDto {
     @IsUUID()
     roomId: string;
 
+    @ApiProperty()
+    @IsUUID()
+    waiterId: string;
+
     @ApiProperty({ type: () => [OrderItemDto] })
     @IsArray()
     @ArrayMinSize(1)
