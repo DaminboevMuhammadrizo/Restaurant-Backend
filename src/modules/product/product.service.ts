@@ -30,7 +30,7 @@ export class ProductService {
     async getAllForManager(branchId: string, currentUser: JwtPayload, query: GetProductDto) {
         await this.checkBranch(branchId, currentUser);
 
-        const where: any = { branchId, status: Status.ACTIVE };
+        const where: any = { branchId };
         if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
         if (query.categoryId) where.productCategoryId = query.categoryId;
 

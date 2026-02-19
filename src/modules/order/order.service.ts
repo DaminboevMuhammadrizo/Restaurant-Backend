@@ -15,6 +15,7 @@ export class OrderService {
         if (branch.companyId !== currentUser.companyId) throw new ForbiddenException("Access Denied!");
     }
 
+
     async getAllForManager(currentUser: JwtPayload, query: GetOrdersDto, branchId: string) {
         await this.checkBranch(branchId, currentUser)
 

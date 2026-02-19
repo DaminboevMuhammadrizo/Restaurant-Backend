@@ -25,7 +25,7 @@ export class PopularProductsService {
         await this.checkBranch(branchId, currentUser);
 
         return await this.prisma.popularProducts.findMany({
-            where: { branchId, status: Status.ACTIVE },
+            where: { branchId },
             include: { product: true }
         });
     }

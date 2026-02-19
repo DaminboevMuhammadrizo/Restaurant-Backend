@@ -21,7 +21,7 @@ export class CategoryService {
 
     async getAllForManager(branchId: string, currnetUser: JwtPayload) {
         await this.checkBranch(branchId, currnetUser)
-        return await this.prisma.productCategory.findMany({ where: { branchId, status: Status.ACTIVE } })
+        return await this.prisma.productCategory.findMany({ where: { branchId } })
     }
 
 

@@ -51,7 +51,7 @@ export class UserService {
         if (currentUser.role === UserRole.MANAGER) await this.checkBranch(branchId, currentUser);
 
         const { search, role, offcet = 0, limit = 10 } = query;
-        const where: any = { branchId, status: Status.ACTIVE };
+        const where: any = { branchId };
 
         if (search) {
             where.OR = [
