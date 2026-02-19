@@ -14,7 +14,6 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 export class OrderController {
     constructor(private readonly orderService: OrderService) { }
 
-
     @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
@@ -42,6 +41,16 @@ export class OrderController {
     @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA, UserRole.SUPER_AFITSANT)
+    @Get('one/:id')
+    getOne(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.orderService.getOne(req['user'] as JwtPayload, id);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
     @Post()
     createOrder(@Body() dto: CreateOrderDto, @Req() req: Request) {
@@ -56,6 +65,21 @@ export class OrderController {
     @Patch(':id')
     updateOrder(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrderDto, @Req() req: Request) {
         return this.orderService.updateOrder(id, dto, req['user'] as JwtPayload);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
+    @ApiBearerAuth()
+    @ApiQuery({ name: 'status', enum: OrderStatus, description: 'PENDING, SUCCESS, CANCELED' })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Patch('status/item/:itemId')
+    updateOrderItemStatus(
+        @Param('itemId', ParseUUIDPipe) itemId: string,
+        @Query('status') status: OrderStatus,
+        @Req() req: Request
+    ) {
+        return this.orderService.updateOrderItemStatus(itemId, status, req['user'] as JwtPayload);
     }
 
 

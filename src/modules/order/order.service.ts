@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { OrderStatus, Status, UserRole } from '@prisma/client';
 import { PrismaService } from 'src/common/Database/prisma.service';
@@ -75,6 +75,49 @@ export class OrderService {
         ]);
 
         return { data, total, page, limit };
+    }
+
+
+    async getOne(currentUser: JwtPayload, id: string) {
+
+        const order = await this.prisma.order.findFirst({
+            where: { id, branchId: currentUser.branchId! },
+            include: {
+                user: {
+                    select: { id: true, firstName: true, lastName: true, phoneNumer: true },
+                },
+                room: {
+                    select: { id: true, name: true, price: true },
+                },
+                orderItem: {
+                    where: { status: { not: OrderStatus.CANCELED } },
+                    include: {
+                        product: {
+                            select: { id: true, name: true, price: true, unit: true, photo: true },
+                        }
+                    }
+                }
+            }
+        });
+
+        if (!order) throw new NotFoundException('Order not found');
+        const totalPrice = order.orderItem.reduce((sum, item) => sum + item.count * item.product.price, 0);
+
+        return {
+            id: order.id,
+            status: order.status,
+            endAt: order.endAt,
+            createdAt: order.createdAt,
+            user: order.user,
+            room: order.room,
+            totalPrice,
+            orderItems: order.orderItem.map(item => ({
+                productId: item.productId,
+                count: item.count,
+                status: item.status,
+                product: item.product,
+            })),
+        };
     }
 
 
@@ -183,6 +226,32 @@ export class OrderService {
             data: {
                 status,
                 endAt: status === OrderStatus.SUCCESS || status === OrderStatus.CANCELED ? new Date() : null,
+            },
+        });
+    }
+
+
+    async updateOrderItemStatus(itemId: string, status: OrderStatus, currentUser: JwtPayload) {
+
+        if (status !== OrderStatus.CANCELED)
+            throw new BadRequestException('faqat "CANCELED" ga ozgartira olasiz !');
+
+        const item = await this.prisma.orderItem.findUnique({ where: { id: itemId }, include: { order: true } });
+
+        if (!item) throw new NotFoundException('OrderItem not found');
+        if (item.branchId !== currentUser.branchId)
+            throw new ForbiddenException('Access denied');
+
+        if (item.status === OrderStatus.CANCELED)
+            throw new BadRequestException('OrderItem already canceled');
+
+        const data = { status: OrderStatus.CANCELED, updatedAt: new Date() };
+        return this.prisma.orderItem.update({
+            where: { id: itemId },
+            data,
+            include: {
+                product: true,
+                order: true,
             },
         });
     }

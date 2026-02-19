@@ -188,11 +188,12 @@ model Order {
 }
 
 model OrderItem {
-    id        String @id @default(uuid())
+    id        String      @id @default(uuid())
     orderId   String
     productId String
     branchId  String
     count     Int
+    status    OrderStatus @default(PENDING)
 
     createdAt DateTime @default(now())
 
