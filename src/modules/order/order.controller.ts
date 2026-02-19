@@ -53,7 +53,7 @@ export class OrderController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
-    @Post()
+    @Patch(':id')
     updateOrder(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrderDto, @Req() req: Request) {
         return this.orderService.updateOrder(id, dto, req['user'] as JwtPayload);
     }
