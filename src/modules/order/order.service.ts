@@ -218,8 +218,6 @@ export class OrderService {
 
         if ([UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA].includes(currentUser.role as any))
             if (order.branchId !== currentUser.branchId) throw new ForbiddenException('Acsess Dined!');
-            else
-                throw new ForbiddenException('Siz bu actionni bajara olmaysiz');
 
         return this.prisma.order.update({
             where: { id: orderId },
@@ -255,5 +253,4 @@ export class OrderService {
             },
         });
     }
-
 }
