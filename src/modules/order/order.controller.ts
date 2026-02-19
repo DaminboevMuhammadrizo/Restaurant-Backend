@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Query, Req, ParseUUIDPipe, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UserRole, OrderStatus } from '@prisma/client';
@@ -61,8 +61,9 @@ export class OrderController {
 
     @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
+    @ApiQuery({ name: 'status', enum: OrderStatus, description: 'PENDING, SUCCESS, CANCELED' })
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.MANAGER, UserRole.SUPERADMIN, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
     @Patch('status/:orderId')
     updateStatus(
         @Param('orderId', ParseUUIDPipe) orderId: string,

@@ -170,20 +170,21 @@ export class OrderService {
 
     async changeStatus(orderId: string, status: OrderStatus, currentUser: JwtPayload) {
         const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+
         if (!order) throw new NotFoundException('Order not found');
 
-
-        if ([UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA].includes(currentUser.role as any)) {
-            if (order.branchId !== currentUser.branchId)
-                throw new ForbiddenException('Acsess Dined!')
-
-        } else {
-            throw new ForbiddenException('Siz bu actionni bajara olmaysiz');
-        }
+        if ([UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA].includes(currentUser.role as any))
+            if (order.branchId !== currentUser.branchId) throw new ForbiddenException('Acsess Dined!');
+            else
+                throw new ForbiddenException('Siz bu actionni bajara olmaysiz');
 
         return this.prisma.order.update({
             where: { id: orderId },
-            data: { status },
+            data: {
+                status,
+                endAt: status === OrderStatus.SUCCESS || status === OrderStatus.CANCELED ? new Date() : null,
+            },
         });
     }
+
 }
