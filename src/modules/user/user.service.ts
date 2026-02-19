@@ -88,8 +88,6 @@ export class UserService {
 
 
     async getWaiters(currentUser: JwtPayload) {
-        if (currentUser.role === UserRole.MANAGER) await this.checkBranch(currentUser.branchId!, currentUser);
-
         const [data, total] = await this.prisma.$transaction([
             this.prisma.user.findMany({
                 where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT, status: Status.ACTIVE },

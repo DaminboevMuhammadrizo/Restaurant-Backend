@@ -41,8 +41,6 @@ export class RoomService {
 
 
     async getAll(currentUser: JwtPayload, roomCategoryId?: string, search?: string) {
-        await this.checkBranch(currentUser.branchId!, currentUser);
-
         return await this.prisma.room.findMany({
             where: {
                 branchId: currentUser.branchId!,
