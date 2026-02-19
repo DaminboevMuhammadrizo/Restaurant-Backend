@@ -41,7 +41,7 @@ export class OrderController {
     @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
     @Post()
     createOrder(@Body() dto: CreateOrderDto, @Req() req: Request) {
         return this.orderService.create(dto, req['user'] as JwtPayload);
