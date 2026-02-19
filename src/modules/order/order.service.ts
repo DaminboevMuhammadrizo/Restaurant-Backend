@@ -4,6 +4,7 @@ import { OrderStatus, Status, UserRole } from '@prisma/client';
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -100,8 +101,8 @@ export class OrderService {
         if (products.length !== orderItems.length)
             throw new NotFoundException('Bazi productlar mavjud emas yoki inactive');
 
-        const order = await this.prisma.$transaction(async (tx) => {
-            const newOrder = await tx.order.create({
+        return await this.prisma.$transaction(async (tx) => {
+            return await tx.order.create({
                 data: {
                     userId: payload.waiterId,
                     roomId,
@@ -117,11 +118,53 @@ export class OrderService {
                 },
                 include: { orderItem: true },
             });
+        });
+    }
 
-            return newOrder;
+
+    async updateOrder(id: string, payload: UpdateOrderDto, currentUser: JwtPayload) {
+
+        const order = await this.prisma.order.findUnique({ where: { id } });
+        if (!order) throw new NotFoundException('Order not found !');
+
+        if (order.branchId !== currentUser.branchId)
+            throw new ForbiddenException('Acsess Dined!');
+
+        if (order.status === OrderStatus.CANCELED || order.status === OrderStatus.SUCCESS)
+            throw new NotFoundException('Zakaz tugagan yoki bekor bolgan !');
+
+        const productIds = payload.orderItems.map(i => i.productId);
+        const products = await this.prisma.product.findMany({
+            where: {
+                id: { in: productIds },
+                branchId: order.branchId,
+                status: Status.ACTIVE
+            }
         });
 
-        return order;
+        if (products.length !== payload.orderItems.length)
+            throw new NotFoundException('Bazi productlar mavjud emas yoki inactive');
+
+        return await this.prisma.$transaction(async (tx) => {
+            await tx.orderItem.createMany({
+                data: payload.orderItems.map(i => ({
+                    productId: i.productId,
+                    branchId: order.branchId,
+                    orderId: id,
+                    count: i.count,
+                })),
+            });
+            return tx.order.findUnique({
+                where: { id },
+                include: {
+                    orderItem: {
+                        include: { product: true },
+                    },
+                },
+            });
+
+        });
+
     }
 
 

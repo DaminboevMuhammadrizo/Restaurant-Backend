@@ -8,6 +8,7 @@ import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Roles } from 'src/common/decorators/role.decorator';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
+import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Controller('order')
 export class OrderController {
@@ -45,6 +46,16 @@ export class OrderController {
     @Post()
     createOrder(@Body() dto: CreateOrderDto, @Req() req: Request) {
         return this.orderService.create(dto, req['user'] as JwtPayload);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Post()
+    updateOrder(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpdateOrderDto, @Req() req: Request) {
+        return this.orderService.updateOrder(id, dto, req['user'] as JwtPayload);
     }
 
 
