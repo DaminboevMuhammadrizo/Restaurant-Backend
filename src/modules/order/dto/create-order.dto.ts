@@ -18,6 +18,7 @@ export class CreateOrderDto {
     @IsUUID()
     roomId: string;
 
+    @ApiProperty({ type: () => [OrderItemDto] })
     @IsArray()
     @ArrayMinSize(1)
     @ValidateNested({ each: true })

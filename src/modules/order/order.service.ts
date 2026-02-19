@@ -89,7 +89,9 @@ export class OrderService {
         if (room.status !== Status.ACTIVE) throw new ForbiddenException('Room inactive');
 
         const branchId = room.branchId;
-        await this.checkBranch(branchId, currentUser)
+        if (room.branchId !== currentUser.branchId)
+            throw new ForbiddenException('Acsess Dined!')
+
         const productIds = orderItems.map(i => i.productId);
         const products = await this.prisma.product.findMany({
             where: { id: { in: productIds }, branchId, status: Status.ACTIVE }
@@ -129,7 +131,9 @@ export class OrderService {
 
 
         if ([UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA].includes(currentUser.role as any)) {
-            await this.checkBranch(order.branchId, currentUser)
+            if (order.branchId !== currentUser.branchId)
+                throw new ForbiddenException('Acsess Dined!')
+
         } else {
             throw new ForbiddenException('Siz bu actionni bajara olmaysiz');
         }
