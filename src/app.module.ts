@@ -15,6 +15,7 @@ import { ProductModule } from './modules/product/product.module';
 import { RoomModule } from './modules/room/room.module';
 import { PopularProductsModule } from './modules/popular-products/popular-products.module';
 import { OrderModule } from './modules/order/order.module';
+import { KitchenModule } from './modules/kitchen/kitchen.module';
 
 @Module({
     imports: [
@@ -38,6 +39,7 @@ import { OrderModule } from './modules/order/order.module';
         RoomModule,
         PopularProductsModule,
         OrderModule,
+        KitchenModule,
     ],
 })
 export class AppModule { }

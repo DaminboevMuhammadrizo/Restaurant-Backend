@@ -19,6 +19,7 @@ enum OrderStatus {
     PENDING
     SUCCESS
     CANCELED
+    READY
 }
 
 enum Status {
@@ -71,6 +72,7 @@ model Branch {
     room            Room[]
     order           Order[]
     product         Product[]
+    Kitchen         Kitchen[]
     orderItem       OrderItem[]
     roomCategory    RoomCategory[]
     productCategory ProductCategory[]
@@ -147,6 +149,7 @@ model Product {
     photo             String?
     amount            Int
     branchId          String
+    kitchenId         String
     productCategoryId String
     unit              UnitType
     status            Status   @default(ACTIVE)
@@ -156,6 +159,7 @@ model Product {
 
     productCategory ProductCategory @relation(fields: [productCategoryId], references: [id], onDelete: Cascade)
     branch          Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
+    kitchen         Kitchen         @relation(fields: [kitchenId], references: [id])
 
     orderItem       OrderItem[]
     popularProducts PopularProducts[]
@@ -200,4 +204,14 @@ model OrderItem {
     order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
     product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
     branch  Branch  @relation(fields: [branchId], references: [id], onDelete: Cascade)
+}
+
+model Kitchen {
+    id       String @id @default(uuid())
+    name     String
+    branchId String
+    status   Status @default(ACTIVE)
+
+    branch  Branch    @relation(fields: [branchId], references: [id])
+    product Product[]
 }

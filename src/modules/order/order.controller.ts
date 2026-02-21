@@ -85,7 +85,7 @@ export class OrderController {
 
     @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
-    @ApiQuery({ name: 'status', enum: OrderStatus, description: 'PENDING, SUCCESS, CANCELED' })
+    @ApiQuery({ name: 'status', enum: OrderStatus, description: `${OrderStatus.PENDING}, ${OrderStatus.SUCCESS}, ${OrderStatus.CANCELED}, ${OrderStatus.READY}` })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
     @Patch('status/:orderId')

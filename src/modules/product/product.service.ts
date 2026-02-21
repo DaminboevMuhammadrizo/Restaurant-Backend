@@ -1,4 +1,4 @@
-import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { Status, UserRole } from '@prisma/client';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { PrismaService } from 'src/common/Database/prisma.service';
@@ -67,16 +67,25 @@ export class ProductService {
     async create(payload: CreateProductDto, currentUser: JwtPayload, file?: Express.Multer.File) {
         await this.checkBranch(payload.branchId, currentUser);
         await this.checkCategory(payload.productCategoryId, currentUser);
+        const kitchen = await this.prisma.kitchen.findUnique({ where: { id: payload.kitchenId } })
+        if (!kitchen)
+            throw new NotFoundException('Kitchen not found !')
+        await this.checkBranch(kitchen.branchId, currentUser)
+
+        if (kitchen.status !== Status.ACTIVE)
+            throw new BadRequestException("Kitchen isnt Active")
+
         return await this.prisma.product.create({
             data: {
                 branchId: payload.branchId,
                 productCategoryId: payload.productCategoryId,
+                kitchenId: payload.kitchenId,
                 name: payload.name,
                 desc: payload.desc,
                 price: payload.price,
                 amount: payload.amount,
                 unit: payload.unit,
-                photo: file?.filename
+                photo: file?.filename,
             }
         });
     }

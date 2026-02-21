@@ -37,4 +37,8 @@ export class CreateProductDto {
     @ApiProperty()
     @IsUUID()
     productCategoryId: string
+
+    @ApiProperty()
+    @IsUUID()
+    kitchenId: string
 }
