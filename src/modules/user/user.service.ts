@@ -1,14 +1,15 @@
-import { ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { getAllusersQuery } from './dto/getAll.dto';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
-import { Status, UserRole } from '@prisma/client';
+import { OrderStatus, Status, UserRole } from '@prisma/client';
 import { getUsersMeQuery } from './dto/get-me-users.dto';
 import { CreteManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
 import { hashPassword } from 'src/common/config/bcrypt';
 import { CreteUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto copy';
+import { Filter } from 'src/common/types/date';
 
 @Injectable()
 export class UserService {
@@ -107,6 +108,113 @@ export class UserService {
         ]);
 
         return { total, data };
+    }
+
+
+    async getWaitersInfo(branchId: string, filter: Filter, currentUser: JwtPayload, from?: string, to?: string) {
+
+        if (currentUser.role === UserRole.SUPERADMIN || currentUser.role === UserRole.MANAGER)
+            await this.checkBranch(branchId, currentUser);
+        else if (currentUser.role === UserRole.KASSA)
+            if (currentUser.branchId !== branchId)
+                throw new ForbiddenException('Access Denied!');
+            else
+                throw new ForbiddenException('Access Denied!');
+
+        const now = new Date();
+        let startDate: Date;
+        let endDate: Date = new Date();
+
+        switch (filter) {
+            case 'today':
+                startDate = new Date(now.setHours(0, 0, 0, 0));
+                break;
+            case 'yesterday':
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                startDate = new Date(yesterday.setHours(0, 0, 0, 0));
+                endDate = new Date(yesterday.setHours(23, 59, 59, 999));
+                break;
+            case 'last7':
+                startDate = new Date();
+                startDate.setDate(startDate.getDate() - 7);
+                break;
+            case 'last30':
+                startDate = new Date();
+                startDate.setDate(startDate.getDate() - 30);
+                break;
+            case 'custom':
+                if (!from || !to)
+                    throw new BadRequestException('Custom filter requires from and to dates');
+                startDate = new Date(from);
+                endDate = new Date(to);
+                break;
+            default:
+                throw new BadRequestException('Invalid filter');
+        }
+
+        const branch = await this.prisma.branch.findUnique({ where: { id: branchId }, select: { kpi: true } });
+        const branchKpi = branch?.kpi || 0;
+
+        const waiters = await this.prisma.user.findMany({
+            where: {
+                branchId,
+                role: UserRole.AFITSANT,
+                status: Status.ACTIVE,
+            },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+            },
+        });
+
+        const orders = await this.prisma.order.findMany({
+            where: {
+                branchId,
+                status: OrderStatus.SUCCESS,
+                createdAt: {
+                    gte: startDate,
+                    lte: endDate,
+                },
+            },
+            include: {
+                orderItem: {
+                    where: { status: OrderStatus.SUCCESS },
+                    include: { product: true },
+                },
+            },
+        });
+
+        const result = waiters.map(waiter => {
+
+            const waiterOrders = orders.filter(o => o.userId === waiter.id);
+            const totalSum = waiterOrders.reduce((sum, order) => {
+                const orderTotal = order.orderItem.reduce((s, item) => {
+                    return s + item.count * item.product.price;
+                }, 0);
+                return sum + orderTotal;
+            }, 0);
+
+            const kpiAmount = branchKpi ? (totalSum * branchKpi) / 100 : 0;
+
+            return {
+                waiterId: waiter.id,
+                fullName: `${waiter.firstName} ${waiter.lastName}`,
+                totalOrders: waiterOrders.length,
+                totalSum,
+                kpiPercent: branchKpi,
+                kpiAmount,
+            };
+        });
+
+        return {
+            filter,
+            from: startDate,
+            to: endDate,
+            totalWaiters: result.length,
+            data: result,
+        };
     }
 
 

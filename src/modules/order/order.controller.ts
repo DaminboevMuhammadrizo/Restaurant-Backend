@@ -73,13 +73,13 @@ export class OrderController {
     @ApiQuery({ name: 'status', enum: OrderStatus, description: 'PENDING, SUCCESS, CANCELED' })
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
-    @Patch('status/item/:itemId')
-    updateOrderItemStatus(
+    @Patch('canceled/item/:itemId')
+    updateOrderItemToCanceled(
         @Param('itemId', ParseUUIDPipe) itemId: string,
-        @Query('status') status: OrderStatus,
+        @Query('amount') amount: number,
         @Req() req: Request
     ) {
-        return this.orderService.updateOrderItemStatus(itemId, status, req['user'] as JwtPayload);
+        return this.orderService.updateOrderItemToCanceled(itemId, amount, req['user'] as JwtPayload);
     }
 
 

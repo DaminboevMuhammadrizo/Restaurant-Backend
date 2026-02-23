@@ -5,10 +5,11 @@ import { PrismaService } from 'src/common/Database/prisma.service';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { SocketService } from 'src/common/session/session.service';
 
 @Injectable()
 export class OrderService {
-    constructor(private prisma: PrismaService) { }
+    constructor(private prisma: PrismaService, private socketService: SocketService) { }
 
     private async checkBranch(branchId: string, currentUser: JwtPayload) {
         const branch = await this.prisma.branch.findUnique({ where: { id: branchId } });
@@ -144,7 +145,7 @@ export class OrderService {
         if (products.length !== orderItems.length)
             throw new NotFoundException('Bazi productlar mavjud emas yoki inactive');
 
-        return await this.prisma.$transaction(async (tx) => {
+        const data = await this.prisma.$transaction(async (tx) => {
             return await tx.order.create({
                 data: {
                     userId: payload.waiterId,
@@ -162,6 +163,8 @@ export class OrderService {
                 include: { orderItem: true },
             });
         });
+        this.socketService.notifyOrderChange(data.branchId, data);
+        return data;
     }
 
 
@@ -188,7 +191,7 @@ export class OrderService {
         if (products.length !== payload.orderItems.length)
             throw new NotFoundException('Bazi productlar mavjud emas yoki inactive');
 
-        return await this.prisma.$transaction(async (tx) => {
+        const data = await this.prisma.$transaction(async (tx) => {
             await tx.orderItem.createMany({
                 data: payload.orderItems.map(i => ({
                     productId: i.productId,
@@ -205,52 +208,76 @@ export class OrderService {
                     },
                 },
             });
-
         });
-
+        if (data)
+            this.socketService.notifyOrderChange(data.branchId, data);
+        return data;
     }
 
 
     async changeStatus(orderId: string, status: OrderStatus, currentUser: JwtPayload) {
-        const order = await this.prisma.order.findUnique({ where: { id: orderId } });
 
+        const order = await this.prisma.order.findUnique({ where: { id: orderId }, include: { orderItem: true } });
         if (!order) throw new NotFoundException('Order not found');
 
-        if ([UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA].includes(currentUser.role as any))
-            if (order.branchId !== currentUser.branchId) throw new ForbiddenException('Acsess Dined!');
+        if (order.branchId !== currentUser.branchId)
+            throw new ForbiddenException('Access Denied!');
 
-        return this.prisma.order.update({
-            where: { id: orderId },
-            data: {
-                status,
-                endAt: status === OrderStatus.SUCCESS || status === OrderStatus.CANCELED ? new Date() : null,
-            },
+        const data = await this.prisma.$transaction(async (tx) => {
+            if (status === OrderStatus.SUCCESS) {
+                await tx.orderItem.updateMany({
+                    where: { orderId, status: OrderStatus.PENDING },
+                    data: { status: OrderStatus.SUCCESS }
+                });
+            }
+
+            if (status === OrderStatus.READY || status === OrderStatus.CANCELED)
+                await tx.orderItem.updateMany({ where: { orderId, status: OrderStatus.PENDING }, data: { status } });
+
+            return await tx.order.update({
+                where: { id: orderId },
+                data: {
+                    status,
+                    endAt: status === OrderStatus.SUCCESS || status === OrderStatus.CANCELED ? new Date() : null
+                }
+            });
         });
+        this.socketService.notifyOrderChange(data.branchId, data);
+        return data;
     }
 
 
-    async updateOrderItemStatus(itemId: string, status: OrderStatus, currentUser: JwtPayload) {
+    async updateOrderItemToCanceled(itemId: string, amount: number, currentUser: JwtPayload) {
 
-        if (status !== OrderStatus.CANCELED)
-            throw new BadRequestException('faqat "CANCELED" ga ozgartira olasiz !');
-
-        const item = await this.prisma.orderItem.findUnique({ where: { id: itemId }, include: { order: true } });
-
+        const item = await this.prisma.orderItem.findFirst({ where: { id: itemId, status: OrderStatus.PENDING }, include: { order: true } });
         if (!item) throw new NotFoundException('OrderItem not found');
+
         if (item.branchId !== currentUser.branchId)
             throw new ForbiddenException('Access denied');
 
         if (item.status === OrderStatus.CANCELED)
             throw new BadRequestException('OrderItem already canceled');
 
-        const data = { status: OrderStatus.CANCELED, updatedAt: new Date() };
-        return this.prisma.orderItem.update({
-            where: { id: itemId },
-            data,
-            include: {
-                product: true,
-                order: true,
-            },
+        if (amount <= 0 || amount > item.count)
+            throw new BadRequestException('Notogri amount');
+
+        const data = await this.prisma.$transaction(async (tx) => {
+            if (amount === item.count)
+                return await tx.orderItem.update({ where: { id: itemId }, data: { status: OrderStatus.CANCELED } });
+
+            await tx.orderItem.update({ where: { id: itemId }, data: { count: item.count - amount } });
+
+            return await tx.orderItem.create({
+                data: {
+                    orderId: item.orderId,
+                    productId: item.productId,
+                    branchId: item.branchId,
+                    count: amount,
+                    status: OrderStatus.CANCELED
+                }
+            });
         });
+        this.socketService.notifyOrderChange(data.branchId, data);
+        return data;
     }
 }

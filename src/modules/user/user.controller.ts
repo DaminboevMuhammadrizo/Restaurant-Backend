@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
@@ -11,6 +11,7 @@ import { CreteManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
 import { CreteUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto copy';
+import type { Filter } from 'src/common/types/date';
 
 @Controller('user')
 export class UserController {
@@ -49,6 +50,25 @@ export class UserController {
         @Req() req: Request
     ) {
         return this.service.getWaiters(req['user'])
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}, ${UserRole.KASSA}` })
+    @ApiBearerAuth()
+    @ApiQuery({ name: "projectId", required: true, type: Number })
+    @ApiQuery({ name: "filter", required: true, enum: ["yesterday", "today", "last7", "last30", "custom"] })
+    @ApiQuery({ name: "from", required: false, type: String, description: "YYYY-MM-DD yoki ISO (RANGE uchun)" })
+    @ApiQuery({ name: "to", required: false, type: String, description: "YYYY-MM-DD yoki ISO (RANGE uchun)" })
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER, UserRole.KASSA)
+    @Get("waiter/info/:branchId")
+    dashboardStats(
+        @Query("branchId", ParseUUIDPipe) branchId: string,
+        @Req() req: Request,
+        @Query("filter") filter: Filter,
+        @Query("from") from?: string,
+        @Query("to") to?: string,
+    ) {
+        return this.service.getWaitersInfo(branchId, filter, req['user'], from, to);
     }
 
 
