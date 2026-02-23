@@ -10,7 +10,6 @@ import { DashboardService } from './dashboard.service';
 export class DashboardController {
     constructor(private readonly service: DashboardService) { }
 
-
     @ApiOperation({ summary: `Statistikalarni olish: ${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)

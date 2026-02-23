@@ -22,6 +22,11 @@ enum OrderStatus {
     READY
 }
 
+enum OrderType {
+    DASTAVKA
+    HERE
+}
+
 enum Status {
     ACTIVE
     INACTIVE
@@ -149,7 +154,7 @@ model Product {
     photo             String?
     amount            Int
     branchId          String
-    kitchenId         String
+    kitchenId         String?
     productCategoryId String
     unit              UnitType
     status            Status   @default(ACTIVE)
@@ -159,7 +164,7 @@ model Product {
 
     productCategory ProductCategory @relation(fields: [productCategoryId], references: [id], onDelete: Cascade)
     branch          Branch          @relation(fields: [branchId], references: [id], onDelete: Cascade)
-    kitchen         Kitchen         @relation(fields: [kitchenId], references: [id])
+    kitchen         Kitchen?        @relation(fields: [kitchenId], references: [id])
 
     orderItem       OrderItem[]
     popularProducts PopularProducts[]
@@ -182,6 +187,7 @@ model Order {
     branchId  String
     endAt     DateTime?
     status    OrderStatus
+    type      OrderType   @default(HERE)
     createdAt DateTime    @default(now())
 
     user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -26,6 +26,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         ConfgModule,
         CoreModule,
         AuthModule,
+        DashboardModule,
         CompanyModule,
         BranchModule,
         UserModule,
@@ -43,7 +44,6 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         OrderModule,
         KitchenModule,
         SessionModule,
-        DashboardModule,
     ],
 })
 export class AppModule { }

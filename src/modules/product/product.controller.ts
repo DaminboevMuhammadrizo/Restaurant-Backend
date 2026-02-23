@@ -54,6 +54,7 @@ export class ProductController {
                 amount: { type: 'number' },
                 unit: { type: 'string', enum: Object.values(UnitType) },
                 branchId: { type: 'string', format: 'uuid' },
+                kitchenId: { type: 'string', format: 'uuid' },
                 productCategoryId: { type: 'string', format: 'uuid' },
                 photo: { type: 'string', format: 'binary' }
             },
@@ -84,6 +85,7 @@ export class ProductController {
                 desc: { type: 'string' },
                 price: { type: 'number' },
                 amount: { type: 'number' },
+                kitchenId: { type: 'string', format: 'uuid' },
                 unit: {
                     type: 'string',
                     enum: Object.values(UnitType)

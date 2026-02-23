@@ -38,4 +38,9 @@ export class UpdateProductDto {
     @IsOptional()
     @IsUUID()
     productCategoryId?: string
+
+    @ApiPropertyOptional()
+    @IsUUID()
+    @IsOptional()
+    kitchenId?: string
 }

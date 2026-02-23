@@ -40,5 +40,6 @@ export class CreateProductDto {
 
     @ApiProperty()
     @IsUUID()
-    kitchenId: string
+    @IsOptional()
+    kitchenId?: string
 }

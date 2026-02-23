@@ -13,7 +13,7 @@ import { UpdateBranchDto } from './dto/update.dto';
 export class BranchController {
     constructor(private readonly service: BranchService) { }
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}` })
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN)

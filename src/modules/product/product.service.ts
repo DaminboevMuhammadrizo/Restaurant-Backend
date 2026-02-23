@@ -63,17 +63,20 @@ export class ProductService {
     }
 
 
-
     async create(payload: CreateProductDto, currentUser: JwtPayload, file?: Express.Multer.File) {
         await this.checkBranch(payload.branchId, currentUser);
         await this.checkCategory(payload.productCategoryId, currentUser);
-        const kitchen = await this.prisma.kitchen.findUnique({ where: { id: payload.kitchenId } })
-        if (!kitchen)
-            throw new NotFoundException('Kitchen not found !')
-        await this.checkBranch(kitchen.branchId, currentUser)
 
-        if (kitchen.status !== Status.ACTIVE)
-            throw new BadRequestException("Kitchen isnt Active")
+        if (payload.kitchenId) {
+            const kitchen = await this.prisma.kitchen.findUnique({ where: { id: payload.kitchenId } })
+            if (!kitchen)
+                throw new NotFoundException('Kitchen not found !')
+
+            await this.checkBranch(kitchen.branchId, currentUser)
+
+            if (kitchen.status !== Status.ACTIVE)
+                throw new BadRequestException("Kitchen isn't Active")
+        }
 
         return await this.prisma.product.create({
             data: {
@@ -107,6 +110,12 @@ export class ProductService {
                 if (existsSync(oldPath)) await fs.unlink(oldPath);
             }
             newPhoto = file.filename;
+        }
+
+        if (payload.kitchenId) {
+            const kitchen = await this.prisma.kitchen.findFirst({ where: { id: payload.kitchenId, status: Status.ACTIVE } })
+            if (!kitchen)
+                throw new NotFoundException('Kitchen not found !')
         }
 
         return await this.prisma.product.update({
