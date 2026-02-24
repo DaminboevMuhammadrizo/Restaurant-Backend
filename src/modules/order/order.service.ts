@@ -125,19 +125,24 @@ export class OrderService {
     async create(payload: CreateOrderDto, currentUser: JwtPayload) {
         const { roomId, orderItems } = payload;
 
-        const room = await this.prisma.room.findUnique({
-            where: { id: roomId },
-            include: { branch: true },
-        });
+        const room = await this.prisma.room.findUnique({ where: { id: roomId } });
 
         if (!room) throw new NotFoundException('Room not found');
         if (room.status !== Status.ACTIVE) throw new ForbiddenException('Room inactive');
+        if (room.branchId !== currentUser.branchId) throw new ForbiddenException('Access Denied!');
+
+        const activeOrder = await this.prisma.order.findFirst({
+            where: {
+                roomId,
+                status: { in: [OrderStatus.PENDING, OrderStatus.READY] }
+            }
+        });
+
+        if (activeOrder) throw new ForbiddenException('Bu honada odam bor yoki xona band');
 
         const branchId = room.branchId;
-        if (room.branchId !== currentUser.branchId)
-            throw new ForbiddenException('Acsess Dined!')
-
         const productIds = orderItems.map(i => i.productId);
+
         const products = await this.prisma.product.findMany({
             where: { id: { in: productIds }, branchId, status: Status.ACTIVE }
         });
@@ -146,7 +151,7 @@ export class OrderService {
             throw new NotFoundException('Bazi productlar mavjud emas yoki inactive');
 
         const data = await this.prisma.$transaction(async (tx) => {
-            return await tx.order.create({
+            return tx.order.create({
                 data: {
                     userId: payload.waiterId,
                     roomId,
@@ -156,14 +161,16 @@ export class OrderService {
                         create: orderItems.map(i => ({
                             productId: i.productId,
                             branchId,
-                            count: i.count,
-                        })),
-                    },
+                            count: i.count
+                        }))
+                    }
                 },
-                include: { orderItem: true },
+                include: { orderItem: true }
             });
         });
+
         this.socketService.notifyOrderChange(data.branchId, data);
+
         return data;
     }
 

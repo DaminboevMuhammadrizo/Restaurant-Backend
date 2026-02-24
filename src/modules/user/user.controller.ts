@@ -12,6 +12,7 @@ import { UpdateManagerDto } from './dto/update-manager.dto';
 import { CreteUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto copy';
 import type { Filter } from 'src/common/types/date';
+import { GetWaitersKpiDto } from './dto/getWaitersKpi.dto';
 
 @Controller('user')
 export class UserController {
@@ -69,6 +70,20 @@ export class UserController {
         @Query("to") to?: string,
     ) {
         return this.service.getWaitersInfo(branchId, filter, req['user'], from, to);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Get('waiters/finance/:branchId')
+    getWaitersKpi(
+        @Param('branchId', ParseUUIDPipe) branchId: string,
+        @Query() query: GetWaitersKpiDto,
+        @Req() req: Request
+    ) {
+        return this.service.getWaitersKpi(branchId, query, req['user'])
     }
 
 

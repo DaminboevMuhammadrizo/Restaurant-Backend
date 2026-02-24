@@ -10,6 +10,7 @@ import { hashPassword } from 'src/common/config/bcrypt';
 import { CreteUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto copy';
 import { Filter } from 'src/common/types/date';
+import { GetWaitersKpiDto } from './dto/getWaitersKpi.dto';
 
 @Injectable()
 export class UserService {
@@ -215,6 +216,90 @@ export class UserService {
             totalWaiters: result.length,
             data: result,
         };
+    }
+
+
+    async getWaitersKpi(branchId: string, query: GetWaitersKpiDto, currentUser: JwtPayload) {
+        await this.checkBranch(branchId, currentUser);
+        const { search, offcet = 0, limit = 10 } = query;
+
+        const branch = await this.prisma.branch.findUnique({ where: { id: branchId }, select: { kpi: true } });
+        const kpiPercent = branch?.kpi ?? 0;
+
+        const waiters = await this.prisma.user.findMany({
+            where: {
+                branchId,
+                role: UserRole.AFITSANT,
+                ...(search && {
+                    OR: [
+                        { firstName: { contains: search, mode: 'insensitive' } },
+                        { phoneNumer: { contains: search } }
+                    ]
+                })
+            },
+            skip: offcet,
+            take: limit,
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                phoneNumer: true
+            }
+        });
+
+        const waiterIds = waiters.map(w => w.id);
+        if (!waiterIds.length) return [];
+
+        const ordersGrouped = await this.prisma.order.groupBy({
+            by: ['userId'],
+            where: {
+                branchId,
+                status: OrderStatus.SUCCESS,
+                userId: { in: waiterIds }
+            },
+            _count: { id: true }
+        });
+
+        const orderItems = await this.prisma.orderItem.findMany({
+            where: {
+                branchId,
+                order: {
+                    status: OrderStatus.SUCCESS,
+                    userId: { in: waiterIds }
+                }
+            },
+            select: {
+                count: true,
+                product: {
+                    select: { price: true }
+                },
+                order: {
+                    select: { userId: true }
+                }
+            }
+        });
+
+        const sumMap: Record<string, number> = {};
+
+        for (const item of orderItems) {
+            const userId = item.order.userId;
+            const itemTotal = item.count * item.product.price;
+            sumMap[userId] = (sumMap[userId] || 0) + itemTotal;
+        }
+
+        return waiters.map(waiter => {
+            const totalOrders =
+                ordersGrouped.find(o => o.userId === waiter.id)?._count.id || 0;
+
+            const totalSum = sumMap[waiter.id] || 0;
+
+            return {
+                ...waiter,
+                totalOrders,
+                totalSum,
+                totalKpi: totalSum * (kpiPercent / 100)
+            };
+        });
     }
 
 
