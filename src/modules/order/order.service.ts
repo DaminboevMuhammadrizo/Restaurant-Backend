@@ -20,7 +20,7 @@ export class OrderService {
 
 
     async getAllForManager(currentUser: JwtPayload, query: GetOrdersDto, branchId: string) {
-        await this.checkBranch(branchId, currentUser)
+        await this.checkBranch(branchId, currentUser);
 
         const { search, page = 1, limit = 10 } = query;
         const skip = (page - 1) * limit;
@@ -41,7 +41,43 @@ export class OrderService {
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
-                include: { orderItem: { include: { product: true } }, room: true, user: true },
+                select: {
+                    id: true,
+                    status: true,
+                    type: true,
+                    endAt: true,
+                    createdAt: true,
+                    room: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    },
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            phoneNumer: true,
+                            role: true
+                        }
+                    },
+                    orderItem: {
+                        select: {
+                            id: true,
+                            count: true,
+                            status: true,
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    price: true,
+                                    unit: true
+                                }
+                            }
+                        }
+                    }
+                },
             }),
             this.prisma.order.count({ where }),
         ]);
@@ -51,11 +87,11 @@ export class OrderService {
 
 
     async getAllForStaff(currentUser: JwtPayload, query: GetOrdersDto) {
-
         const { search, page = 1, limit = 10 } = query;
         const skip = (page - 1) * limit;
 
         if (!currentUser.branchId) throw new ForbiddenException('BranchId kerak token orqali');
+
         const where: any = { branchId: currentUser.branchId };
 
         if (search) {
@@ -71,7 +107,46 @@ export class OrderService {
                 skip,
                 take: limit,
                 orderBy: { createdAt: 'desc' },
-                include: { orderItem: { include: { product: true } }, room: true, user: true },
+                select: {
+                    id: true,
+                    status: true,
+                    type: true,
+                    endAt: true,
+                    createdAt: true,
+                    room: {
+                        select: {
+                            id: true,
+                            name: true
+                        }
+                    },
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true,
+                            phoneNumer: true,
+                            role: true
+                        }
+                    },
+                    orderItem: {
+                        select: {
+                            id: true,
+                            count: true,
+                            status: true,
+                            product: {
+                                select: {
+                                    id: true,
+                                    name: true,
+                                    price: true,
+                                    amount: true,
+                                    photo: true,
+                                    status: true,
+                                    unit: true
+                                }
+                            }
+                        }
+                    }
+                },
             }),
             this.prisma.order.count({ where }),
         ]);

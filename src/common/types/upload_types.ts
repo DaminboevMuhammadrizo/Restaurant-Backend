@@ -33,7 +33,7 @@ export const fileStorages = (allowedMimes: AllowedMime[]) => ({
 function fileFilters(allowedMimes: AllowedMime[]) {
   return (req: Request, file: Express.Multer.File, cb) => {
     const mime = file.mimetype.split('/')[0] as AllowedMime;
-    console.log(allowedMimes);
+    // console.log(allowedMimes);
 
     if (!allowedMimes.includes(mime)) {
       cb(

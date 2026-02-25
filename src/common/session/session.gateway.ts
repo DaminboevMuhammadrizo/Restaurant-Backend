@@ -9,11 +9,11 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private activeUsers = new Map<string, string>();
 
     handleConnection(client: Socket) {
-        console.log(`🔌 Client ulandi: ${client.id}`);
+        // console.log(`🔌 Client ulandi: ${client.id}`);
     }
 
     handleDisconnect(client: Socket) {
-        console.log(`❌ Client uzildi: ${client.id}`);
+        // console.log(`❌ Client uzildi: ${client.id}`);
         for (const [userId, socketId] of this.activeUsers.entries()) {
             if (socketId === client.id) {
                 this.activeUsers.delete(userId);
@@ -30,7 +30,7 @@ export class SocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
         if (!data.userId || !data.branchId) return;
         this.activeUsers.set(data.userId, client.id);
         client.join(data.branchId);
-        console.log(`✅ User ${data.userId} filial xonasiga qo'shildi: ${data.branchId}`);
+        // console.log(`✅ User ${data.userId} filial xonasiga qo'shildi: ${data.branchId}`);
     }
 
     emitToBranch(branchId: string, event: string, payload: any) {

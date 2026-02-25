@@ -10,9 +10,9 @@ export function unlinkFile(filePathFromFront: string) {
 
         if (existsSync(fullPath)) {
             unlinkSync(fullPath);
-            console.log("File deleted ✅");
+            // console.log("File deleted ✅");
         } else {
-            console.log("File not found ❌");
+            // console.log("File not found ❌");
         }
     } catch (error) {
         console.log("File delete error:", error);
