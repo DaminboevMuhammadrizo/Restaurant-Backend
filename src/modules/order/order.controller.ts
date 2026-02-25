@@ -9,6 +9,7 @@ import { Roles } from 'src/common/decorators/role.decorator';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { SyncOrderDto } from './dto/update-order-items.dto';
 
 @Controller('order')
 export class OrderController {
@@ -55,6 +56,19 @@ export class OrderController {
     @Post()
     createOrder(@Body() dto: CreateOrderDto, @Req() req: Request) {
         return this.orderService.create(dto, req['user'] as JwtPayload);
+    }
+
+    @ApiOperation({ summary: `${UserRole.SUPER_AFITSANT}, ${UserRole.AFITSANT}, ${UserRole.CHEF}, ${UserRole.KASSA}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPER_AFITSANT, UserRole.AFITSANT, UserRole.CHEF, UserRole.KASSA)
+    @Patch('sync-items/:id')
+    syncOrderItems(
+        @Param('id', ParseUUIDPipe) id: string,
+        @Body() payload: SyncOrderDto,
+        @Req() req: Request
+    ) {
+        return this.orderService.syncOrderItems(id, payload, req['user'] as JwtPayload);
     }
 
 

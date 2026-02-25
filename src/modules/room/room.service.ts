@@ -29,26 +29,63 @@ export class RoomService {
     async getAllFormanager(branchId: string, currentUser: JwtPayload, roomCategoryId?: string, search?: string) {
         await this.checkBranch(branchId, currentUser);
 
-        return await this.prisma.room.findMany({
+        const rooms = await this.prisma.room.findMany({
             where: {
                 branchId,
                 ...(roomCategoryId && { roomCategoryId }),
                 ...(search && { name: { contains: search, mode: 'insensitive' } })
             },
-            include: { roomCategory: true }
+            include: {
+                order: {
+                    where: {
+                        status: {
+                            in: ['PENDING', 'READY']
+                        }
+                    },
+                    select: {
+                        id: true
+                    }
+                }
+            }
+        });
+
+        return rooms.map(room => {
+            const { order, ...roomData } = room;
+            return {
+                ...roomData,
+                isOccupied: order.length > 0
+            };
         });
     }
 
 
     async getAll(currentUser: JwtPayload, roomCategoryId?: string, search?: string) {
-        return await this.prisma.room.findMany({
+        const rooms = await this.prisma.room.findMany({
             where: {
                 branchId: currentUser.branchId!,
                 ...(roomCategoryId && { roomCategoryId }),
-                ...(search && { name: { contains: search, mode: 'insensitive' } }),
-                status: Status.ACTIVE
+                ...(search && { name: { contains: search, mode: 'insensitive' } })
             },
-            include: { roomCategory: true }
+            include: {
+                order: {
+                    where: {
+                        status: {
+                            in: ['PENDING', 'READY']
+                        }
+                    },
+                    select: {
+                        id: true
+                    }
+                }
+            }
+        });
+
+        return rooms.map(room => {
+            const { order, ...roomData } = room;
+            return {
+                ...roomData,
+                isOccupied: order.length > 0
+            };
         });
     }
 

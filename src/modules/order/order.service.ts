@@ -1,11 +1,12 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderStatus, Status, UserRole } from '@prisma/client';
+import { OrderStatus, Status } from '@prisma/client';
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
 import { SocketService } from 'src/common/session/session.service';
+import { SyncOrderDto } from './dto/update-order-items.dto';
 
 @Injectable()
 export class OrderService {
@@ -172,6 +173,75 @@ export class OrderService {
         this.socketService.notifyOrderChange(data.branchId, data);
 
         return data;
+    }
+
+
+    async syncOrderItems(orderId: string, payload: SyncOrderDto, currentUser: JwtPayload) {
+
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { orderItem: { where: { status: { not: OrderStatus.CANCELED } } } }
+        });
+
+        if (!order) throw new NotFoundException('Order topilmadi');
+        if (order.branchId !== currentUser.branchId) throw new ForbiddenException('Access Denied');
+
+        const incomingItems = payload.items;
+        const existingItems = order.orderItem;
+
+        return await this.prisma.$transaction(async (tx) => {
+            for (const incoming of incomingItems) {
+                const existing = existingItems.find(ei => ei.productId === incoming.productId);
+
+                if (existing) {
+                    if (existing.count !== incoming.count) {
+                        await tx.orderItem.update({
+                            where: { id: existing.id },
+                            data: { count: incoming.count }
+                        });
+                    }
+                } else {
+                    const product = await tx.product.findUnique({
+                        where: { id: incoming.productId, branchId: order.branchId, status: Status.ACTIVE }
+                    });
+                    if (!product) throw new NotFoundException(`Mahsulot topilmadi yoki nofaol: ${incoming.productId}`);
+
+                    await tx.orderItem.create({
+                        data: {
+                            orderId,
+                            productId: incoming.productId,
+                            count: incoming.count,
+                            branchId: order.branchId,
+                            status: OrderStatus.PENDING
+                        }
+                    });
+                }
+            }
+
+            const itemsToCancel = existingItems.filter(ei => !incomingItems.some(incoming => incoming.productId === ei.productId));
+
+            if (itemsToCancel.length > 0) {
+                await tx.orderItem.updateMany({
+                    where: { id: { in: itemsToCancel.map(i => i.id) } },
+                    data: { status: OrderStatus.CANCELED }
+                });
+            }
+
+            const updatedOrder = await tx.order.findUnique({
+                where: { id: orderId },
+                include: {
+                    orderItem: {
+                        where: { status: { not: OrderStatus.CANCELED } },
+                        include: { product: true }
+                    },
+                    room: true,
+                    user: true
+                }
+            });
+
+            this.socketService.notifyOrderChange(order.branchId, updatedOrder);
+            return updatedOrder;
+        });
     }
 
 
