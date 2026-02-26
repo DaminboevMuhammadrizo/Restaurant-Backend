@@ -10,7 +10,8 @@ import { hashPassword } from 'src/common/config/bcrypt';
 import { CreteUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto copy';
 import { Filter } from 'src/common/types/date';
-import { GetWaitersKpiDto } from './dto/getWaitersKpi.dto';
+import { GetWaitersKpiDto, TimeFilter } from './dto/getWaitersKpi.dto';
+import { startOfDay, startOfWeek, startOfMonth, endOfDay } from 'date-fns';
 
 @Injectable()
 export class UserService {
@@ -221,15 +222,38 @@ export class UserService {
 
     async getWaitersKpi(branchId: string, query: GetWaitersKpiDto, currentUser: JwtPayload) {
         await this.checkBranch(branchId, currentUser);
-        const { search, offcet = 0, limit = 10 } = query;
+        const { search, offset = 0, limit = 10, timeType, fromDate, toDate } = query;
 
-        const branch = await this.prisma.branch.findUnique({ where: { id: branchId }, select: { kpi: true } });
+        let start: Date;
+        let end: Date = new Date();
+
+        switch (timeType) {
+            case TimeFilter.TODAY:
+                start = startOfDay(new Date());
+                break;
+            case TimeFilter.WEEKLY:
+                start = startOfWeek(new Date(), { weekStartsOn: 1 });
+                break;
+            case TimeFilter.CUSTOM:
+                start = new Date(fromDate!);
+                end = endOfDay(new Date(toDate!));
+                break;
+            case TimeFilter.MONTHLY:
+            default:
+                start = startOfMonth(new Date());
+                break;
+        }
+
+        const branch = await this.prisma.branch.findUnique({
+            where: { id: branchId },
+            select: { kpi: true }
+        });
         const kpiPercent = branch?.kpi ?? 0;
 
         const waiters = await this.prisma.user.findMany({
             where: {
                 branchId,
-                role: UserRole.AFITSANT,
+                role: { in: [UserRole.AFITSANT, UserRole.SUPER_AFITSANT] },
                 ...(search && {
                     OR: [
                         { firstName: { contains: search, mode: 'insensitive' } },
@@ -237,7 +261,7 @@ export class UserService {
                     ]
                 })
             },
-            skip: offcet,
+            skip: offset,
             take: limit,
             select: {
                 id: true,
@@ -255,7 +279,8 @@ export class UserService {
             where: {
                 branchId,
                 status: OrderStatus.SUCCESS,
-                userId: { in: waiterIds }
+                userId: { in: waiterIds },
+                createdAt: { gte: start, lte: end } // Vaqt filtri
             },
             _count: { id: true }
         });
@@ -265,32 +290,28 @@ export class UserService {
                 branchId,
                 order: {
                     status: OrderStatus.SUCCESS,
-                    userId: { in: waiterIds }
-                }
+                    userId: { in: waiterIds },
+                    createdAt: { gte: start, lte: end } // Vaqt filtri
+                },
+                status: OrderStatus.SUCCESS // Faqat muvaffaqiyatli sotilgan mahsulotlar
             },
             select: {
                 count: true,
-                product: {
-                    select: { price: true }
-                },
-                order: {
-                    select: { userId: true }
-                }
+                product: { select: { price: true } },
+                order: { select: { userId: true } }
             }
         });
 
         const sumMap: Record<string, number> = {};
-
         for (const item of orderItems) {
             const userId = item.order.userId;
             const itemTotal = item.count * item.product.price;
             sumMap[userId] = (sumMap[userId] || 0) + itemTotal;
         }
 
+        // 5. Natijani qaytarish
         return waiters.map(waiter => {
-            const totalOrders =
-                ordersGrouped.find(o => o.userId === waiter.id)?._count.id || 0;
-
+            const totalOrders = ordersGrouped.find(o => o.userId === waiter.id)?._count.id || 0;
             const totalSum = sumMap[waiter.id] || 0;
 
             return {
@@ -301,7 +322,6 @@ export class UserService {
             };
         });
     }
-
 
     async createManager(payload: CreteManagerDto) {
         const company = await this.prisma.company.findUnique({ where: { id: payload.companyId } })
