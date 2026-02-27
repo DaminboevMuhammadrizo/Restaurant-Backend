@@ -18,6 +18,8 @@ import { OrderModule } from './modules/order/order.module';
 import { KitchenModule } from './modules/kitchen/kitchen.module';
 import { SessionModule } from './common/session/session.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { CostCategoryModule } from './modules/cost-category/cost-category.module';
+import { CostModule } from './modules/cost/cost.module';
 
 @Module({
     imports: [
@@ -44,6 +46,8 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
         OrderModule,
         KitchenModule,
         SessionModule,
+        CostCategoryModule,
+        CostModule,
     ],
 })
 export class AppModule { }

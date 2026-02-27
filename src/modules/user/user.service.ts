@@ -193,7 +193,7 @@ export class UserService {
             const waiterOrders = orders.filter(o => o.userId === waiter.id);
             const totalSum = waiterOrders.reduce((sum, order) => {
                 const orderTotal = order.orderItem.reduce((s, item) => {
-                    return s + item.count * item.product.price;
+                    return s + item.count * Number(item.product.price ?? 0);
                 }, 0);
                 return sum + orderTotal;
             }, 0);
@@ -305,7 +305,7 @@ export class UserService {
         const sumMap: Record<string, number> = {};
         for (const item of orderItems) {
             const userId = item.order.userId;
-            const itemTotal = item.count * item.product.price;
+            const itemTotal = item.count * Number(item.product.price ?? 0);
             sumMap[userId] = (sumMap[userId] || 0) + itemTotal;
         }
 

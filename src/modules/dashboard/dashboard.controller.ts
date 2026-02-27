@@ -36,4 +36,21 @@ export class DashboardController {
     ) {
         return await this.service.getFinance(req['user'], filter, from, to);
     }
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.MANAGER, UserRole.SUPERADMIN)
+    @ApiQuery({ name: "filter", required: true, enum: ["yesterday", "today", "last7", "last30", "custom"] })
+    @ApiQuery({ name: "from", required: false, type: String })
+    @ApiQuery({ name: "to", required: false, type: String })
+    @Get('revenue')
+    getRevenue(
+        @Req() req: Request,
+        @Query('filter') filter: string,
+        @Query('from') from?: string,
+        @Query('to') to?: string,
+    ) {
+        return this.service.getRevenueChart(req['user'], filter, from, to);
+    }
 }

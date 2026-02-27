@@ -75,11 +75,13 @@ model Branch {
 
     user            User[]
     room            Room[]
+    costs           Costs[]
     order           Order[]
     product         Product[]
     Kitchen         Kitchen[]
     orderItem       OrderItem[]
     roomCategory    RoomCategory[]
+    costsCategory   CostsCategory[]
     productCategory ProductCategory[]
     popularProducts PopularProducts[]
 }
@@ -92,6 +94,7 @@ model User {
     password   String
     companyId  String?
     branchId   String?
+    salary     Decimal? @db.Decimal(12, 2)
     status     Status   @default(ACTIVE)
     role       UserRole
 
@@ -115,12 +118,12 @@ model RoomCategory {
 }
 
 model Room {
-    id             String @id @default(uuid())
+    id             String   @id @default(uuid())
     name           String
-    price          Float
+    price          Decimal? @db.Decimal(12, 2)
     branchId       String
     roomCategoryId String
-    status         Status @default(ACTIVE)
+    status         Status   @default(ACTIVE)
 
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
@@ -150,7 +153,7 @@ model Product {
     id                String   @id @default(uuid())
     name              String
     desc              String?
-    price             Float
+    price             Decimal? @db.Decimal(12, 2)
     photo             String?
     amount            Int
     branchId          String
@@ -213,11 +216,39 @@ model OrderItem {
 }
 
 model Kitchen {
-    id       String @id @default(uuid())
-    name     String
-    branchId String
-    status   Status @default(ACTIVE)
+    id        String   @id @default(uuid())
+    name      String
+    branchId  String
+    status    Status   @default(ACTIVE)
+    createdAt DateTime @default(now())
 
     branch  Branch    @relation(fields: [branchId], references: [id])
     product Product[]
+}
+
+model CostsCategory {
+    id        String   @id @default(uuid())
+    name      String
+    branchId  String
+    status    Status   @default(ACTIVE)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    branch Branch  @relation(fields: [branchId], references: [id])
+    cost   Costs[]
+}
+
+model Costs {
+    id              String   @id @default(uuid())
+    quantity        Int
+    costAmount      Decimal? @db.Decimal(12, 2)
+    name            String
+    desc            String?
+    branchId        String
+    costsCategoryId String
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+
+    branch        Branch        @relation(fields: [branchId], references: [id])
+    costsCategory CostsCategory @relation(fields: [costsCategoryId], references: [id])
 }

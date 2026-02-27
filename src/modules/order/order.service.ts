@@ -178,7 +178,7 @@ export class OrderService {
         });
 
         if (!order) throw new NotFoundException('Order not found');
-        const totalPrice = order.orderItem.reduce((sum, item) => sum + item.count * item.product.price, 0);
+        const totalPrice = order.orderItem.reduce((sum, item) => sum + item.count * Number(item.product.price ?? 0), 0);
 
         return {
             id: order.id,
