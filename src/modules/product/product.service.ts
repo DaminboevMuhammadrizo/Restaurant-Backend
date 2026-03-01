@@ -63,6 +63,24 @@ export class ProductService {
     }
 
 
+    async getAllForAll(branchId: string, query: GetProductDto) {
+
+        const where: any = { branchId };
+        if (query.search) where.name = { contains: query.search, mode: 'insensitive' };
+        if (query.categoryId) where.productCategoryId = query.categoryId;
+
+        const skip = ((query.page || 1) - 1) * (query.limit || 10);
+        const take = query.limit || 10;
+
+        const [data, total] = await this.prisma.$transaction([
+            this.prisma.product.findMany({ where, skip, take }),
+            this.prisma.product.count({ where })
+        ]);
+
+        return { data, total, page: query.page || 1, limit: query.limit || 10 };
+    }
+
+
     async create(payload: CreateProductDto, currentUser: JwtPayload, file?: Express.Multer.File) {
         await this.checkBranch(payload.branchId, currentUser);
         await this.checkCategory(payload.productCategoryId, currentUser);

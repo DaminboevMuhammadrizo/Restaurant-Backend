@@ -2,7 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { getAllusersQuery } from './dto/getAll.dto';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
-import { OrderStatus, Status, UserRole } from '@prisma/client';
+import { OrderStatus, Prisma, Status, UserRole } from '@prisma/client';
 import { getUsersMeQuery } from './dto/get-me-users.dto';
 import { CreteManagerDto } from './dto/create-manager.dto';
 import { UpdateManagerDto } from './dto/update-manager.dto';
@@ -77,6 +77,7 @@ export class UserService {
                     firstName: true,
                     lastName: true,
                     phoneNumer: true,
+                    salary: true,
                     role: true,
                     branchId: true,
                     companyId: true,
@@ -168,6 +169,7 @@ export class UserService {
                 id: true,
                 firstName: true,
                 lastName: true,
+                salary: true,
             },
         });
 
@@ -191,18 +193,24 @@ export class UserService {
         const result = waiters.map(waiter => {
 
             const waiterOrders = orders.filter(o => o.userId === waiter.id);
-            const totalSum = waiterOrders.reduce((sum, order) => {
-                const orderTotal = order.orderItem.reduce((s, item) => {
-                    return s + item.count * Number(item.product.price ?? 0);
-                }, 0);
-                return sum + orderTotal;
-            }, 0);
 
-            const kpiAmount = branchKpi ? (totalSum * branchKpi) / 100 : 0;
+            const totalSumDecimal = waiterOrders.reduce((sum, order) => {
+                const orderTotal = order.orderItem.reduce((s, item) => {
+                    const count = item.count;
+                    const price = item.product?.price ?? new Prisma.Decimal(0);
+                    return s.plus(count.mul(price));
+                }, new Prisma.Decimal(0));
+                return sum.plus(orderTotal);
+            }, new Prisma.Decimal(0));
+
+            const totalSum = totalSumDecimal.toNumber();
+
+            const kpiAmount = branchKpi ? totalSumDecimal.mul(branchKpi).div(100).toNumber() : 0;
 
             return {
                 waiterId: waiter.id,
                 fullName: `${waiter.firstName} ${waiter.lastName}`,
+                salary: waiter.salary,
                 totalOrders: waiterOrders.length,
                 totalSum,
                 kpiPercent: branchKpi,
@@ -280,7 +288,7 @@ export class UserService {
                 branchId,
                 status: OrderStatus.SUCCESS,
                 userId: { in: waiterIds },
-                createdAt: { gte: start, lte: end } // Vaqt filtri
+                createdAt: { gte: start, lte: end }
             },
             _count: { id: true }
         });
@@ -291,9 +299,9 @@ export class UserService {
                 order: {
                     status: OrderStatus.SUCCESS,
                     userId: { in: waiterIds },
-                    createdAt: { gte: start, lte: end } // Vaqt filtri
+                    createdAt: { gte: start, lte: end }
                 },
-                status: OrderStatus.SUCCESS // Faqat muvaffaqiyatli sotilgan mahsulotlar
+                status: OrderStatus.SUCCESS
             },
             select: {
                 count: true,
@@ -302,26 +310,31 @@ export class UserService {
             }
         });
 
-        const sumMap: Record<string, number> = {};
+        const sumMap: Record<string, Prisma.Decimal> = {};
+
         for (const item of orderItems) {
             const userId = item.order.userId;
-            const itemTotal = item.count * Number(item.product.price ?? 0);
-            sumMap[userId] = (sumMap[userId] || 0) + itemTotal;
+            const count = item.count;
+            const price = item.product?.price ?? new Prisma.Decimal(0);
+            const itemTotal = count.mul(price);
+
+            if (!sumMap[userId]) sumMap[userId] = new Prisma.Decimal(0);
+            sumMap[userId] = sumMap[userId].plus(itemTotal);
         }
 
-        // 5. Natijani qaytarish
         return waiters.map(waiter => {
             const totalOrders = ordersGrouped.find(o => o.userId === waiter.id)?._count.id || 0;
-            const totalSum = sumMap[waiter.id] || 0;
+            const totalSumDecimal = sumMap[waiter.id] ?? new Prisma.Decimal(0);
 
             return {
                 ...waiter,
                 totalOrders,
-                totalSum,
-                totalKpi: totalSum * (kpiPercent / 100)
+                totalSum: totalSumDecimal.toNumber(),
+                totalKpi: totalSumDecimal.mul(kpiPercent).div(100).toNumber()
             };
         });
     }
+
 
     async createManager(payload: CreteManagerDto) {
         const company = await this.prisma.company.findUnique({ where: { id: payload.companyId } })
@@ -383,7 +396,7 @@ export class UserService {
 
 
     async createUser(payload: CreteUserDto, currentUser: JwtPayload) {
-        const { firstName, lastName, password, phoneNumer, branchId, role } = payload
+        const { firstName, lastName, password, phoneNumer, branchId, role, salary } = payload
 
         const branch = await this.prisma.branch.findUnique({ where: { id: branchId } })
         if (!branch)
@@ -397,16 +410,15 @@ export class UserService {
             throw new ConflictException('Phone alredy exists !')
 
         return await this.prisma.user.create({
-            data: { firstName, lastName, phoneNumer, branchId, role, password: await hashPassword(password) }
+            data: { firstName, lastName, phoneNumer, branchId, role, salary, password: await hashPassword(password) }
         })
     }
 
 
     async updateUser(id: string, payload: UpdateUserDto, currentUser: JwtPayload) {
         const existsUser = await this.prisma.user.findUnique({ where: { id } })
-        if (!existsUser)
-            throw new NotFoundException('User not found !')
 
+        if (!existsUser) throw new NotFoundException('User not found !')
         await this.checkBranch(existsUser.branchId!, currentUser)
 
         if (payload.phoneNumer && existsUser.phoneNumer !== payload.phoneNumer) {
@@ -421,6 +433,7 @@ export class UserService {
                 firstName: payload.firstName ?? existsUser.firstName,
                 lastName: payload.lastName ?? existsUser.lastName,
                 phoneNumer: payload.phoneNumer ?? existsUser.phoneNumer,
+                salary: payload.salary ?? existsUser.salary,
                 password: payload.password ? await hashPassword(payload.password) : existsUser.phoneNumer
             },
         })

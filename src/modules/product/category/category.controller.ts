@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { CategoryService } from './category.service';
 import { UserRole } from '@prisma/client';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
@@ -19,7 +19,10 @@ export class CategoryController {
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
     @Get('all/manager/:branchId')
-    getAllForManager(@Param('branchId', ParseUUIDPipe) branchId: string, @Req() req: Request) {
+    getAllForManager(
+        @Param('branchId', ParseUUIDPipe) branchId: string,
+        @Req() req: Request
+    ) {
         return this.service.getAllForManager(branchId, req['user'])
     }
 
@@ -31,6 +34,13 @@ export class CategoryController {
     @Get('all')
     getAll(@Req() req: Request) {
         return this.service.getAll(req['user'])
+    }
+
+
+    @ApiOperation({ summary: `ALL` })
+    @Get('all/:branchId')
+    getAllForAll(@Param('branchId', ParseUUIDPipe) branchId: string) {
+        return this.service.getAllForAll(branchId)
     }
 
 

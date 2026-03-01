@@ -1,23 +1,33 @@
-import { ApiProperty } from "@nestjs/swagger"
-import { IsMobilePhone, IsOptional, IsString, IsUUID, MaxLength, MinLength } from "class-validator"
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger"
+import { IsMobilePhone, IsNumber, IsOptional, IsString, MaxLength } from "class-validator"
 
 export class UpdateUserDto {
 
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
     @MaxLength(24)
-    firstName: string
+    firstName?: string
 
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
     @MaxLength(24)
-    lastName: string
+    lastName?: string
 
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsMobilePhone("uz-UZ")
-    phoneNumer: string
+    phoneNumer?: string
 
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
-    password: string
+    password?: string
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsNumber()
+    @IsOptional()
+    salary?: number;
 }

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { OrderStatus, Status } from '@prisma/client';
+import { OrderStatus, Prisma, Status } from '@prisma/client';
 import { PrismaService } from 'src/common/Database/prisma.service';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { GetOrdersDto } from './dto/get.dto';
@@ -156,7 +156,6 @@ export class OrderService {
 
 
     async getOne(currentUser: JwtPayload, id: string) {
-
         const order = await this.prisma.order.findFirst({
             where: { id, branchId: currentUser.branchId! },
             include: {
@@ -167,7 +166,7 @@ export class OrderService {
                     select: { id: true, name: true, price: true },
                 },
                 orderItem: {
-                    where: { status: { not: OrderStatus.CANCELED } },
+                    where: { status: { not: "CANCELED" } },
                     include: {
                         product: {
                             select: { id: true, name: true, price: true, unit: true, photo: true },
@@ -178,7 +177,13 @@ export class OrderService {
         });
 
         if (!order) throw new NotFoundException('Order not found');
-        const totalPrice = order.orderItem.reduce((sum, item) => sum + item.count * Number(item.product.price ?? 0), 0);
+
+        const totalPriceDecimal = order.orderItem.reduce((sum, item) => {
+            const price = item.product?.price ?? new Prisma.Decimal(0);
+            return sum.plus(item.count.mul(price));
+        }, new Prisma.Decimal(0));
+
+        const totalPrice = totalPriceDecimal.toNumber();
 
         return {
             id: order.id,
@@ -188,12 +193,15 @@ export class OrderService {
             user: order.user,
             room: order.room,
             totalPrice,
-            orderItems: order.orderItem.map(item => ({
+            orderItorderItems: order.orderItem.map(item => ({
                 productId: item.productId,
-                count: item.count,
+                count: item.count.toNumber(),
                 status: item.status,
-                product: item.product,
-            })),
+                product: item.product ? {
+                    ...item.product,
+                    price: item.product.price?.toNumber() ?? 0
+                } : null
+            }))
         };
     }
 
@@ -234,11 +242,18 @@ export class OrderService {
                     branchId,
                     status: OrderStatus.PENDING,
                     orderItem: {
-                        create: orderItems.map(i => ({
-                            productId: i.productId,
-                            branchId,
-                            count: i.count
-                        }))
+                        create: orderItems.map(i => {
+                            const countDecimal = new Prisma.Decimal(i.count);
+                            const product = products.find(p => p.id === i.productId);
+                            const priceDecimal = product?.price ?? new Prisma.Decimal(0);
+
+                            return {
+                                productId: i.productId,
+                                branchId,
+                                count: countDecimal,
+                                total: countDecimal.mul(priceDecimal)
+                            };
+                        })
                     }
                 },
                 include: { orderItem: true }
@@ -268,11 +283,13 @@ export class OrderService {
             for (const incoming of incomingItems) {
                 const existing = existingItems.find(ei => ei.productId === incoming.productId);
 
+                const incomingCountDecimal = new Prisma.Decimal(incoming.count);
+
                 if (existing) {
-                    if (existing.count !== incoming.count) {
+                    if (!existing.count.equals(incomingCountDecimal)) {
                         await tx.orderItem.update({
                             where: { id: existing.id },
-                            data: { count: incoming.count }
+                            data: { count: incomingCountDecimal }
                         });
                     }
                 } else {
@@ -285,7 +302,7 @@ export class OrderService {
                         data: {
                             orderId,
                             productId: incoming.productId,
-                            count: incoming.count,
+                            count: incomingCountDecimal,
                             branchId: order.branchId,
                             status: OrderStatus.PENDING
                         }
@@ -401,7 +418,10 @@ export class OrderService {
 
     async updateOrderItemToCanceled(itemId: string, amount: number, currentUser: JwtPayload) {
 
-        const item = await this.prisma.orderItem.findFirst({ where: { id: itemId, status: OrderStatus.PENDING }, include: { order: true } });
+        const item = await this.prisma.orderItem.findFirst({
+            where: { id: itemId, status: OrderStatus.PENDING },
+            include: { order: true }
+        });
         if (!item) throw new NotFoundException('OrderItem not found');
 
         if (item.branchId !== currentUser.branchId)
@@ -410,25 +430,36 @@ export class OrderService {
         if (item.status === OrderStatus.CANCELED)
             throw new BadRequestException('OrderItem already canceled');
 
-        if (amount <= 0 || amount > item.count)
+        const amountDecimal = new Prisma.Decimal(amount);
+
+        if (amountDecimal.lte(0) || amountDecimal.gt(item.count))
             throw new BadRequestException('Notogri amount');
 
         const data = await this.prisma.$transaction(async (tx) => {
-            if (amount === item.count)
-                return await tx.orderItem.update({ where: { id: itemId }, data: { status: OrderStatus.CANCELED } });
 
-            await tx.orderItem.update({ where: { id: itemId }, data: { count: item.count - amount } });
+            if (amountDecimal.equals(item.count)) {
+                return await tx.orderItem.update({
+                    where: { id: itemId },
+                    data: { status: OrderStatus.CANCELED }
+                });
+            }
+
+            await tx.orderItem.update({
+                where: { id: itemId },
+                data: { count: item.count.minus(amountDecimal) }
+            });
 
             return await tx.orderItem.create({
                 data: {
                     orderId: item.orderId,
                     productId: item.productId,
                     branchId: item.branchId,
-                    count: amount,
+                    count: amountDecimal,
                     status: OrderStatus.CANCELED
                 }
             });
         });
+
         this.socketService.notifyOrderChange(data.branchId, data);
         return data;
     }

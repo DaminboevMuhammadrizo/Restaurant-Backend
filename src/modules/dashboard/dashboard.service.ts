@@ -1,11 +1,12 @@
 import { BadRequestException, ForbiddenException, Injectable } from '@nestjs/common';
-import { OrderStatus, UserRole } from '@prisma/client';
+import { OrderStatus, Prisma, UserRole } from '@prisma/client';
 import { JwtPayload } from 'src/common/config/jwt/jwt.service';
 import { PrismaService } from 'src/common/Database/prisma.service';
 
 @Injectable()
 export class DashboardService {
     constructor(private readonly prisma: PrismaService) { }
+
 
     async getAllStatus(currentUser: JwtPayload) {
         const compId = currentUser.companyId!;
@@ -22,15 +23,21 @@ export class DashboardService {
             include: { product: true }
         });
 
-        const totalPrice = items.reduce((acc, item) => { return acc + (item.count * Number(item.product.price ?? 0)) }, 0);
+        const totalRevenueDecimal = items.reduce((sum, item) => {
+            const price = item.product?.price ?? new Prisma.Decimal(0);
+            return sum.plus(item.count.mul(price));
+        }, new Prisma.Decimal(0));
+
+        const totalRevenue = totalRevenueDecimal.toNumber();
         const daysActive = firstOrder ? Math.ceil((new Date().getTime() - firstOrder.createdAt.getTime()) / (1000 * 3600 * 24)) : 1;
+        const averageDailyRevenue = totalRevenue / (daysActive || 1);
 
         return {
             totalUsers,
             totalBranches,
             totalManagers,
-            totalRevenue: totalPrice,
-            averageDailyRevenue: totalPrice / (daysActive || 1)
+            totalRevenue,
+            averageDailyRevenue
         };
     }
 
@@ -67,7 +74,7 @@ export class DashboardService {
 
         const items = await this.prisma.orderItem.findMany({
             where: {
-                status: OrderStatus.SUCCESS,
+                status: "SUCCESS",
                 branch: { companyId: compId },
                 createdAt: { gte: startDate, lte: endDate }
             },
@@ -75,25 +82,31 @@ export class DashboardService {
             orderBy: { createdAt: 'asc' }
         });
 
-        const dailyData: Record<string, number> = {};
+        const dailyData: Record<string, Prisma.Decimal> = {};
 
         items.forEach(item => {
-            const dateKey = item.createdAt.toISOString().split('T')[0]; // "2024-05-20" formatida
-            const itemTotal = item.count * (Number(item.product.price ?? 0));
+            const dateKey = item.createdAt.toISOString().split('T')[0]; // YYYY-MM-DD
+            const price = item.product?.price ?? new Prisma.Decimal(0);
+            const itemTotal = item.count.mul(price);
 
             if (!dailyData[dateKey]) {
-                dailyData[dateKey] = 0;
+                dailyData[dateKey] = new Prisma.Decimal(0);
             }
-            dailyData[dateKey] += itemTotal;
+            dailyData[dateKey] = dailyData[dateKey].plus(itemTotal);
         });
 
         const chartData = Object.keys(dailyData).map(date => ({
             date,
-            daromad: dailyData[date],
+            daromad: dailyData[date].toNumber(),
             xarajat: 0
         }));
 
-        const totalRevenue = chartData.reduce((sum, item) => sum + item.daromad, 0);
+        const totalRevenueDecimal = Object.values(dailyData).reduce(
+            (sum, val) => sum.plus(val),
+            new Prisma.Decimal(0)
+        );
+
+        const totalRevenue = totalRevenueDecimal.toNumber();
 
         return {
             summary: {
@@ -119,23 +132,19 @@ export class DashboardService {
             case 'today':
                 startDate = new Date(today);
                 break;
-
             case 'yesterday':
                 startDate = new Date(today);
                 startDate.setDate(startDate.getDate() - 1);
                 endDate = new Date(today);
                 break;
-
             case 'last7':
                 startDate = new Date(today);
                 startDate.setDate(startDate.getDate() - 7);
                 break;
-
             case 'last30':
                 startDate = new Date(today);
                 startDate.setDate(startDate.getDate() - 30);
                 break;
-
             case 'custom':
                 if (!from || !to) {
                     throw new BadRequestException('from and to dates are required for custom filter');
@@ -143,7 +152,6 @@ export class DashboardService {
                 startDate = new Date(from);
                 endDate = new Date(to);
                 break;
-
             default:
                 throw new BadRequestException('Invalid filter type');
         }
@@ -154,10 +162,11 @@ export class DashboardService {
         });
 
         const branchIds = branches.map(b => b.id);
+
         const orders = await this.prisma.orderItem.findMany({
             where: {
                 branchId: { in: branchIds },
-                status: OrderStatus.SUCCESS,
+                status: "SUCCESS",
                 createdAt: { gte: startDate, lte: endDate }
             },
             include: { product: true }
@@ -170,29 +179,31 @@ export class DashboardService {
             }
         });
 
-        const resultMap: Record<string, { revenue: number; expense: number }> = {};
+        const resultMap: Record<string, { revenue: Prisma.Decimal; expense: Prisma.Decimal }> = {};
 
         for (const order of orders) {
             const dateKey = order.createdAt.toISOString().split('T')[0];
-            const revenue = order.count * Number(order.product?.price ?? 0);
+            const price = order.product?.price ?? new Prisma.Decimal(0);
+            const revenue = order.count.mul(price);
 
-            if (!resultMap[dateKey]) resultMap[dateKey] = { revenue: 0, expense: 0 };
-            resultMap[dateKey].revenue += revenue;
+            if (!resultMap[dateKey]) resultMap[dateKey] = { revenue: new Prisma.Decimal(0), expense: new Prisma.Decimal(0) };
+            resultMap[dateKey].revenue = resultMap[dateKey].revenue.plus(revenue);
         }
 
         for (const cost of costs) {
             const dateKey = cost.createdAt.toISOString().split('T')[0];
-            const expense = Number(cost.costAmount ?? 0) * cost.quantity;
+            const amount = cost.costAmount ?? new Prisma.Decimal(0);
+            const expense = amount.mul(cost.quantity);
 
-            if (!resultMap[dateKey]) resultMap[dateKey] = { revenue: 0, expense: 0 };
-            resultMap[dateKey].expense += expense;
+            if (!resultMap[dateKey]) resultMap[dateKey] = { revenue: new Prisma.Decimal(0), expense: new Prisma.Decimal(0) };
+            resultMap[dateKey].expense = resultMap[dateKey].expense.plus(expense);
         }
 
         return Object.entries(resultMap)
             .map(([date, values]) => ({
                 date,
-                revenue: values.revenue,
-                expense: values.expense
+                revenue: values.revenue.toNumber(),
+                expense: values.expense.toNumber()
             }))
             .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     }

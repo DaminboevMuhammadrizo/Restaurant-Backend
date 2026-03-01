@@ -40,6 +40,15 @@ export class ProductController {
     }
 
 
+    @ApiOperation({ summary: `ALL` })
+    @Get('all/:branchId')
+    getAllForAll(
+        @Param('branchId', ParseUUIDPipe) branchId: string,
+        @Query() query: GetProductDto,
+    ) {
+        return this.service.getAllForAll(branchId, query);
+    }
+
     @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
     @ApiBearerAuth()
     @ApiConsumes('multipart/form-data')

@@ -69,22 +69,22 @@ export class CostController {
     }
 
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
-    @Delete(':id')
-    deleteOne(@Param('id') id: string, @Req() req: Request) {
-        return this.service.deleteOne(id, req['user']);
-    }
+    // @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    // @ApiBearerAuth()
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    // @Delete(':id')
+    // deleteOne(@Param('id') id: string, @Req() req: Request) {
+    //     return this.service.deleteOne(id, req['user']);
+    // }
 
 
-    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
-    @ApiBearerAuth()
-    @UseGuards(AuthGuard, RolesGuard)
-    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
-    @Post('delete-many')
-    deleteMany(@Body() payload: DeleteManyCostDto, @Req() req: Request) {
-        return this.service.deleteMany(payload, req['user']);
-    }
+    // @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    // @ApiBearerAuth()
+    // @UseGuards(AuthGuard, RolesGuard)
+    // @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    // @Post('delete-many')
+    // deleteMany(@Body() payload: DeleteManyCostDto, @Req() req: Request) {
+    //     return this.service.deleteMany(payload, req['user']);
+    // }
 }

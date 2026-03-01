@@ -6,7 +6,7 @@ import { CreateCostDto } from "./dto/create-cost.dto";
 import { UpdateCostDto } from "./dto/update-cost.dto";
 import { DeleteManyCostDto } from "./dto/delete-many-cost.dto";
 import { AnalyticsQueryDto, DateFilter } from "./dto/analytics-query.dto";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, Prisma } from "@prisma/client";
 import { BranchAnalytics } from "./types/types";
 
 @Injectable()
@@ -87,7 +87,7 @@ export class CostService {
             include: { costsCategory: true }
         });
 
-        const totalExpense = data.reduce((sum, c) => sum + Number(c.costAmount ?? 0) * c.quantity, 0);
+        const totalExpense = data.reduce((sum, c) => sum + Number(c.costAmount ?? 0) * (c.quantity ?? 0), 0);
         return { totalExpense, data };
     }
 
@@ -101,18 +101,32 @@ export class CostService {
             include: { product: true }
         });
 
-        const income = orders.reduce((sum, o) => sum + o.count * Number(o.product.price), 0);
-        const expenses = await this.prisma.costs.findMany({ where: { branchId } });
+        const income = orders.reduce((sum, o) => {
+            const price = o.product.price ?? new Prisma.Decimal(0)
+            return sum.plus(o.count.mul(price))
+        }, new Prisma.Decimal(0));
 
-        const expenseTotal = expenses.reduce((sum, e) => sum + Number(e.costAmount ?? 0) * e.quantity, 0);
-        const total = income + expenseTotal;
+        const expenses = await this.prisma.costs.findMany({
+            where: { branchId }
+        });
+
+        const expenseTotal = expenses.reduce((sum, e) => {
+            const amount = e.costAmount ?? new Prisma.Decimal(0)
+            return sum.plus(amount.mul(e.quantity))
+        }, new Prisma.Decimal(0));
+
+        const total = income.plus(expenseTotal)
 
         return {
-            totalIncome: income,
-            totalExpense: expenseTotal,
-            incomePercent: total ? (income / total) * 100 : 0,
-            expensePercent: total ? (expenseTotal / total) * 100 : 0,
-            profit: income - expenseTotal
+            totalIncome: income.toNumber(),
+            totalExpense: expenseTotal.toNumber(),
+            incomePercent: total.toNumber()
+                ? income.div(total).mul(100).toNumber()
+                : 0,
+            expensePercent: total.toNumber()
+                ? expenseTotal.div(total).mul(100).toNumber()
+                : 0,
+            profit: income.minus(expenseTotal).toNumber()
         };
     }
 
@@ -129,24 +143,24 @@ export class CostService {
         const branches = await this.prisma.branch.findMany({ where: { companyId: user.companyId } });
         const branchResults: BranchAnalytics[] = [];
 
-        let totalIncome = 0;
-        let totalExpense = 0;
+        let totalIncome = new Prisma.Decimal(0);
+        let totalExpense = new Prisma.Decimal(0);
 
         for (const branch of branches) {
 
             const orders = await this.prisma.orderItem.findMany({
                 where: {
                     branchId: branch.id,
-                    status: OrderStatus.SUCCESS,
+                    status: "SUCCESS",
                     createdAt: { gte: start, lte: end }
                 },
                 include: { product: true }
             });
 
-            const income = orders.reduce(
-                (sum, o) => sum + o.count * Number(o.product?.price ?? 0),
-                0
-            );
+            const income = orders.reduce((sum, o) => {
+                const price = o.product?.price ?? new Prisma.Decimal(0);
+                return sum.plus(o.count.mul(price));
+            }, new Prisma.Decimal(0));
 
             const expenses = await this.prisma.costs.findMany({
                 where: {
@@ -155,49 +169,47 @@ export class CostService {
                 }
             });
 
-            const expenseTotal = expenses.reduce(
-                (sum, e) =>
-                    sum + Number(e.costAmount ?? 0) * e.quantity,
-                0
-            );
+            const expenseTotal = expenses.reduce((sum, e) => {
+                const amount = e.costAmount ?? new Prisma.Decimal(0);
+                return sum.plus(amount.mul(e.quantity));
+            }, new Prisma.Decimal(0));
 
-            // Previous income
             const prevOrders = await this.prisma.orderItem.findMany({
                 where: {
                     branchId: branch.id,
-                    status: OrderStatus.SUCCESS,
+                    status: "SUCCESS",
                     createdAt: { gte: prevStart, lte: prevEnd }
                 },
                 include: { product: true }
             });
 
-            const prevIncome = prevOrders.reduce(
-                (sum, o) => sum + o.count * Number(o.product?.price ?? 0),
-                0
-            );
+            const prevIncome = prevOrders.reduce((sum, o) => {
+                const price = o.product?.price ?? new Prisma.Decimal(0);
+                return sum.plus(o.count.mul(price));
+            }, new Prisma.Decimal(0));
 
-            totalIncome += income;
-            totalExpense += expenseTotal;
+            totalIncome = totalIncome.plus(income);
+            totalExpense = totalExpense.plus(expenseTotal);
 
             branchResults.push({
                 branchId: branch.id,
                 branchName: branch.name,
-                income,
-                expense: expenseTotal,
-                profit: income - expenseTotal,
-                growth: this.calculateGrowth(income, prevIncome)
+                income: income.toNumber(),
+                expense: expenseTotal.toNumber(),
+                profit: income.minus(expenseTotal).toNumber(),
+                growth: this.calculateGrowth(income.toNumber(), prevIncome.toNumber())
             });
         }
 
-        const total = totalIncome + totalExpense;
+        const total = totalIncome.plus(totalExpense);
 
         return {
             overall: {
-                totalIncome,
-                totalExpense,
-                profit: totalIncome - totalExpense,
-                incomePercent: total ? (totalIncome / total) * 100 : 0,
-                expensePercent: total ? (totalExpense / total) * 100 : 0
+                totalIncome: totalIncome.toNumber(),
+                totalExpense: totalExpense.toNumber(),
+                profit: totalIncome.minus(totalExpense).toNumber(),
+                incomePercent: total.isZero() ? 0 : totalIncome.div(total).mul(100).toNumber(),
+                expensePercent: total.isZero() ? 0 : totalExpense.div(total).mul(100).toNumber()
             },
             branches: branchResults
         };

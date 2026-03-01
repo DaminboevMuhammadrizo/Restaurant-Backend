@@ -34,15 +34,23 @@ enum Status {
 
 enum UnitType {
     DONA
+    PORSIYA
     KG
     GRAM
     LITR
     ML
-    PORSIYA
     QUTI
     BLOK
     PACHKA
     TOVA
+    // XARAJATLAR
+    KUB_METR
+    KVADRAT_METR
+    KILOVATT_SOAT
+    SOAT
+    KUN
+    OY
+    FOIZ
 }
 
 model Company {
@@ -80,6 +88,7 @@ model Branch {
     product         Product[]
     Kitchen         Kitchen[]
     orderItem       OrderItem[]
+    posTerminals    PosTerminal[]
     roomCategory    RoomCategory[]
     costsCategory   CostsCategory[]
     productCategory ProductCategory[]
@@ -94,6 +103,7 @@ model User {
     password   String
     companyId  String?
     branchId   String?
+    img        String?
     salary     Decimal? @db.Decimal(12, 2)
     status     Status   @default(ACTIVE)
     role       UserRole
@@ -205,7 +215,8 @@ model OrderItem {
     orderId   String
     productId String
     branchId  String
-    count     Int
+    total     Decimal?    @db.Decimal(14, 2)
+    count     Decimal     @db.Decimal(12, 3)
     status    OrderStatus @default(PENDING)
 
     createdAt DateTime @default(now())
@@ -251,4 +262,16 @@ model Costs {
 
     branch        Branch        @relation(fields: [branchId], references: [id])
     costsCategory CostsCategory @relation(fields: [costsCategoryId], references: [id])
+}
+
+model PosTerminal {
+    id        String   @id @default(uuid())
+    name      String
+    branchId  String
+    ipAddress String
+    status    Status   @default(ACTIVE)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    branch Branch @relation(fields: [branchId], references: [id], onDelete: Cascade)
 }

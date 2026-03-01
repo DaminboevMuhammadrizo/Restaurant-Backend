@@ -30,6 +30,11 @@ export class CategoryService {
     }
 
 
+    async getAllForAll(branchId: string) {
+        return await this.prisma.productCategory.findMany({ where: { branchId } })
+    }
+
+
     async create(payload: CreateCategoryDto, currnetUser: JwtPayload, file?: Express.Multer.File) {
         await this.checkBranch(payload.branchId, currnetUser)
         return await this.prisma.productCategory.create({
