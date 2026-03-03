@@ -20,6 +20,7 @@ import { SessionModule } from './common/session/session.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CostCategoryModule } from './modules/cost-category/cost-category.module';
 import { CostModule } from './modules/cost/cost.module';
+import { PrinterModule } from './infra/printer/printer.module';
 
 @Module({
     imports: [
@@ -48,6 +49,7 @@ import { CostModule } from './modules/cost/cost.module';
         SessionModule,
         CostCategoryModule,
         CostModule,
+        PrinterModule,
     ],
 })
 export class AppModule { }
