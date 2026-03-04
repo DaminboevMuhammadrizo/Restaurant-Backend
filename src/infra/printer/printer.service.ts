@@ -27,13 +27,13 @@ export class PrinterService {
             const LF = '\n';
 
             let d = '';
-            d += ESC + '@';           // reset
-            d += ESC + 'a\x01';      // center
+            d += ESC + '@';
+            d += ESC + 'a\x01';
             d += ESC + '!\x38';
             d += 'RESTORAN' + LF;
             d += ESC + '!\x00';
             d += '================================' + LF;
-            d += ESC + 'a\x00';      // left
+            d += ESC + 'a\x00';
             d += `Xona    : ${order.room}` + LF;
             d += `Afisant : ${order.waiter}` + LF;
             d += `Sana    : ${new Date().toLocaleString('uz-UZ')}` + LF;
@@ -53,18 +53,37 @@ export class PrinterService {
             d += tl + ' '.repeat(Math.max(1, 32 - tl.length - tr.length)) + tr + LF;
             d += ESC + '!\x00';
             d += LF + LF + LF;
-            d += GS + 'V\x41\x10';   // cut
+            d += GS + 'V\x41\x10';
 
             const client = new net.Socket();
             client.setTimeout(5000);
+
+            console.log(`[PrinterService] Ulanish: ${this.IP}:${this.PORT}`);
+
             client.connect(this.PORT, this.IP, () => {
+                console.log('[PrinterService] Connected to printer, sending data...');
                 client.write(Buffer.from(d, 'binary'), () => {
+                    console.log('[PrinterService] Data sent, closing connection.');
                     client.destroy();
                     resolve();
                 });
             });
-            client.on('timeout', () => { client.destroy(); reject(new Error('Printer timeout')); });
-            client.on('error', (e) => { client.destroy(); reject(e); });
+
+            client.on('timeout', () => {
+                console.error('[PrinterService] Printer timeout');
+                client.destroy();
+                reject(new Error('Printer timeout'));
+            });
+
+            client.on('error', (e) => {
+                console.error('[PrinterService] Error:', e.message);
+                client.destroy();
+                reject(e);
+            });
+
+            client.on('close', () => {
+                console.log('[PrinterService] Connection closed.');
+            });
         });
     }
 }
