@@ -1,9 +1,20 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsString } from "class-validator";
+import { ApiPropertyOptional } from "@nestjs/swagger";
+import { IsIP, IsOptional, IsString } from "class-validator";
 
 export class UpdateKitchenDto {
-
-    @ApiProperty()
+    @ApiPropertyOptional()
+    @IsOptional()
     @IsString()
-    name: string
+    name?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsIP()
+    @IsString()
+    posIp?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    posPort?: string;
 }

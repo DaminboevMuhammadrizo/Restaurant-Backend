@@ -230,6 +230,8 @@ model Kitchen {
     id        String   @id @default(uuid())
     name      String
     branchId  String
+    posIp     String?
+    posPort   String?
     status    Status   @default(ACTIVE)
     createdAt DateTime @default(now())
 
@@ -267,8 +269,9 @@ model Costs {
 model PosTerminal {
     id        String   @id @default(uuid())
     name      String
-    branchId  String
+    branchId  String   @unique
     ipAddress String
+    port      String   @default("9100")
     status    Status   @default(ACTIVE)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt

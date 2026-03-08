@@ -21,6 +21,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { CostCategoryModule } from './modules/cost-category/cost-category.module';
 import { CostModule } from './modules/cost/cost.module';
 import { PrinterModule } from './infra/printer/printer.module';
+import { PosModule } from './modules/pos/pos.module';
 
 @Module({
     imports: [
@@ -50,6 +51,7 @@ import { PrinterModule } from './infra/printer/printer.module';
         CostCategoryModule,
         CostModule,
         PrinterModule,
+        PosModule,
     ],
 })
 export class AppModule { }
