@@ -26,7 +26,8 @@ export class PopularProductsService {
 
         return await this.prisma.popularProducts.findMany({
             where: { branchId },
-            include: { product: true }
+            include: { product: true },
+            orderBy: { createdAt: 'desc' }
         });
     }
 
@@ -36,7 +37,8 @@ export class PopularProductsService {
 
         return await this.prisma.popularProducts.findMany({
             where: { branchId: currentUser.branchId, status: Status.ACTIVE },
-            include: { product: true }
+            include: { product: true },
+            orderBy: { createdAt: 'desc' }
         });
     }
 

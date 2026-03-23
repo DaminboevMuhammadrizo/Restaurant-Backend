@@ -46,10 +46,8 @@ export class KitchenService {
         if (!currentUser.branchId) throw new BadRequestException('Foydalanuvchi biror filialga biriktirilmagan!');
 
         return await this.prisma.kitchen.findMany({
-            where: {
-                branchId: currentUser.branchId,
-                status: Status.ACTIVE
-            }
+            where: { branchId: currentUser.branchId, status: Status.ACTIVE },
+            orderBy: { createdAt: 'desc' }
         });
     }
 

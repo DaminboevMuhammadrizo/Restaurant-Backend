@@ -84,6 +84,7 @@ export class CostService {
             where,
             skip: (page - 1) * Number(limit),
             take: Number(limit),
+            orderBy: { createdAt: 'desc' },
             include: { costsCategory: true }
         });
 
@@ -140,7 +141,10 @@ export class CostService {
         const prevStart = new Date(start.getTime() - diff);
         const prevEnd = new Date(end.getTime() - diff);
 
-        const branches = await this.prisma.branch.findMany({ where: { companyId: user.companyId } });
+        const branches = await this.prisma.branch.findMany({
+            where: { companyId: user.companyId },
+            orderBy: { createdAt: 'desc' }
+        });
         const branchResults: BranchAnalytics[] = [];
 
         let totalIncome = new Prisma.Decimal(0);

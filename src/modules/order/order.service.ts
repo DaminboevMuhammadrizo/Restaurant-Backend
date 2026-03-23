@@ -167,6 +167,7 @@ export class OrderService {
                 },
                 orderItem: {
                     where: { status: { not: "CANCELED" } },
+                    orderBy: { createdAt: 'asc' },
                     include: {
                         product: {
                             select: { id: true, name: true, price: true, unit: true, photo: true },

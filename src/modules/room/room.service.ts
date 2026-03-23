@@ -35,6 +35,7 @@ export class RoomService {
                 ...(roomCategoryId && { roomCategoryId }),
                 ...(search && { name: { contains: search, mode: 'insensitive' } })
             },
+            orderBy: { createdAt: 'desc' },
             include: {
                 order: {
                     where: {
@@ -66,6 +67,7 @@ export class RoomService {
                 ...(roomCategoryId && { roomCategoryId }),
                 ...(search && { name: { contains: search, mode: 'insensitive' } })
             },
+            orderBy: { createdAt: 'desc' },
             include: {
                 order: {
                     where: {

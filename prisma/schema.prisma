@@ -189,6 +189,9 @@ model PopularProducts {
     branchId  String
     status    Status @default(ACTIVE)
 
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
     product Product? @relation(fields: [productId], references: [id])
     branch  Branch   @relation(fields: [branchId], references: [id])
 }

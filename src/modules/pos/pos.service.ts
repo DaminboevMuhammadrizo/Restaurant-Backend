@@ -20,7 +20,8 @@ export class PosService {
     async findAll(currentUser: JwtPayload) {
         return await this.prisma.posTerminal.findMany({
             where: { branch: { companyId: currentUser.companyId! } },
-            include: { branch: true }
+            include: { branch: true },
+            orderBy: { createdAt: 'desc' }
         });
     }
 

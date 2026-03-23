@@ -92,9 +92,11 @@ export class UserService {
 
 
     async getWaiters(currentUser: JwtPayload) {
+        const where = { branchId: currentUser.branchId!, role: UserRole.AFITSANT, status: Status.ACTIVE };
+
         const [data, total] = await this.prisma.$transaction([
             this.prisma.user.findMany({
-                where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT, status: Status.ACTIVE },
+                where,
                 orderBy: { createdAt: "desc" },
                 select: {
                     id: true,
@@ -107,7 +109,7 @@ export class UserService {
                     status: true,
                 },
             }),
-            this.prisma.user.count({ where: { branchId: currentUser.branchId!, role: UserRole.AFITSANT } }),
+            this.prisma.user.count({ where }),
         ]);
 
         return { total, data };
@@ -165,6 +167,7 @@ export class UserService {
                 role: UserRole.AFITSANT,
                 status: Status.ACTIVE,
             },
+            orderBy: { createdAt: 'desc' },
             select: {
                 id: true,
                 firstName: true,
@@ -269,6 +272,7 @@ export class UserService {
                     ]
                 })
             },
+            orderBy: { createdAt: 'desc' },
             skip: offset,
             take: limit,
             select: {

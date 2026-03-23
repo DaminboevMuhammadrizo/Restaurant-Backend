@@ -38,7 +38,7 @@ export class ProductService {
         const take = query.limit || 10;
 
         const [data, total] = await this.prisma.$transaction([
-            this.prisma.product.findMany({ where, skip, take }),
+            this.prisma.product.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
             this.prisma.product.count({ where })
         ]);
 
@@ -55,7 +55,7 @@ export class ProductService {
         const take = query.limit || 10;
 
         const [data, total] = await this.prisma.$transaction([
-            this.prisma.product.findMany({ where, skip, take }),
+            this.prisma.product.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
             this.prisma.product.count({ where })
         ]);
 
@@ -73,7 +73,7 @@ export class ProductService {
         const take = query.limit || 10;
 
         const [data, total] = await this.prisma.$transaction([
-            this.prisma.product.findMany({ where, skip, take }),
+            this.prisma.product.findMany({ where, skip, take, orderBy: { createdAt: 'desc' } }),
             this.prisma.product.count({ where })
         ]);
 
