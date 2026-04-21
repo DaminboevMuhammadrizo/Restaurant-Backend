@@ -34,7 +34,7 @@ export class PosController {
     @ApiBearerAuth()
     @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.KASSA)
-    @Get('my-terminal')
+    @Get('kassa/my-terminal')
     getMyTerminal(@Req() req: Request) {
         return this.posService.findMyBranchPos(req['user']);
     }

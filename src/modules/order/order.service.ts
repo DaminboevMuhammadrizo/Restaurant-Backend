@@ -116,7 +116,13 @@ export class OrderService {
                     room: {
                         select: {
                             id: true,
-                            name: true
+                            name: true,
+                            roomCategory: {
+                                select: {
+                                    id: true,
+                                    name: true
+                                }
+                            }
                         }
                     },
                     user: {
