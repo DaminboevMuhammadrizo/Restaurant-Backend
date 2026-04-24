@@ -106,8 +106,20 @@ export class ProductService {
                 price: payload.price,
                 amount: payload.amount,
                 unit: payload.unit,
+                additionalInfo: payload.additionalInfo || [],
                 photo: file?.filename,
             }
+        });
+    }
+
+
+    async addAdditionInfo(productId: string, additionalInfo: string[], currentUser: JwtPayload) {
+        const product = await this.prisma.product.findUnique({ where: { id: productId } });
+        if (!product) throw new NotFoundException('Product not found!');
+        await this.checkBranch(product.branchId, currentUser);
+
+        return await this.prisma.product.update({
+            where: { id: productId }, data: { additionalInfo }
         });
     }
 

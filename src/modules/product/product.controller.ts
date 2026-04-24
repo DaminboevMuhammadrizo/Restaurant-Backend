@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseArrayPipe, ParseUUIDPipe, Patch, Post, Query, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { UnitType, UserRole } from '@prisma/client';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation } from '@nestjs/swagger';
@@ -65,6 +65,7 @@ export class ProductController {
                 branchId: { type: 'string', format: 'uuid' },
                 kitchenId: { type: 'string', format: 'uuid' },
                 productCategoryId: { type: 'string', format: 'uuid' },
+                additionalInfo: { type: 'array', items: { type: 'string' } },
                 photo: { type: 'string', format: 'binary' }
             },
         },
@@ -79,6 +80,21 @@ export class ProductController {
         @UploadedFile() file?: Express.Multer.File
     ) {
         return this.service.create(payload, req['user'], file);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @ApiBody({ schema: { type: 'array', items: { type: 'string' } } })
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Post('addition-info/:productId')
+    addAdditionInfo(
+        @Param('productId', ParseUUIDPipe) productId: string,
+        @Body(new ParseArrayPipe({ items: String })) additionalInfo: string[],
+        @Req() req: Request
+    ) {
+        return this.service.addAdditionInfo(productId, additionalInfo, req['user']);
     }
 
 

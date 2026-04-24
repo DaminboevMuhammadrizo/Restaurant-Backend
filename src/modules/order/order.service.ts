@@ -258,7 +258,8 @@ export class OrderService {
                                 productId: i.productId,
                                 branchId,
                                 count: countDecimal,
-                                total: countDecimal.mul(priceDecimal)
+                                total: countDecimal.mul(priceDecimal),
+                                additionalInfo: i.additionalInfo || []
                             };
                         })
                     }
