@@ -290,14 +290,14 @@ export class OrderService {
         return await this.prisma.$transaction(async (tx) => {
             for (const incoming of incomingItems) {
                 const existing = existingItems.find(ei => ei.productId === incoming.productId);
-
                 const incomingCountDecimal = new Prisma.Decimal(incoming.count);
+                const incomingInfo = incoming.additionalInfo || [];
 
                 if (existing) {
                     if (!existing.count.equals(incomingCountDecimal)) {
                         await tx.orderItem.update({
                             where: { id: existing.id },
-                            data: { count: incomingCountDecimal }
+                            data: { count: incomingCountDecimal, additionalInfo: incomingInfo }
                         });
                     }
                 } else {
@@ -312,7 +312,8 @@ export class OrderService {
                             productId: incoming.productId,
                             count: incomingCountDecimal,
                             branchId: order.branchId,
-                            status: OrderStatus.PENDING
+                            status: OrderStatus.PENDING,
+                            additionalInfo: incomingInfo
                         }
                     });
                 }
@@ -375,6 +376,7 @@ export class OrderService {
                     branchId: order.branchId,
                     orderId: id,
                     count: i.count,
+                    additionalInfo: i.additionalInfo || []
                 })),
             });
             return tx.order.findUnique({

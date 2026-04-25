@@ -1,4 +1,4 @@
-import { IsArray, IsInt, IsNotEmpty, IsString, Min, ValidateNested } from 'class-validator';
+import { IsArray, IsInt, IsNotEmpty, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -12,6 +12,12 @@ export class SyncOrderItemDto {
     @IsInt()
     @Min(1)
     count: number;
+
+    @ApiProperty({ type: [String], required: false })
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    additionalInfo?: string[];
 }
 
 export class SyncOrderDto {
