@@ -56,14 +56,14 @@ export class UserController {
 
     @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}, ${UserRole.KASSA}` })
     @ApiBearerAuth()
-    @ApiQuery({ name: "projectId", required: true, type: Number })
     @ApiQuery({ name: "filter", required: true, enum: ["yesterday", "today", "last7", "last30", "custom"] })
     @ApiQuery({ name: "from", required: false, type: String, description: "YYYY-MM-DD yoki ISO (RANGE uchun)" })
     @ApiQuery({ name: "to", required: false, type: String, description: "YYYY-MM-DD yoki ISO (RANGE uchun)" })
+    @UseGuards(AuthGuard, RolesGuard)
     @Roles(UserRole.SUPERADMIN, UserRole.MANAGER, UserRole.KASSA)
     @Get("waiter/info/:branchId")
     dashboardStats(
-        @Query("branchId", ParseUUIDPipe) branchId: string,
+        @Param("branchId", ParseUUIDPipe) branchId: string,
         @Req() req: Request,
         @Query("filter") filter: Filter,
         @Query("from") from?: string,

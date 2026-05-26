@@ -167,10 +167,7 @@ export class CostService {
             }, new Prisma.Decimal(0));
 
             const expenses = await this.prisma.costs.findMany({
-                where: {
-                    branchId: branch.id,
-                    createdAt: { gte: start, lte: end }
-                }
+                where: { branchId: branch.id, createdAt: { gte: start, lte: end } }
             });
 
             const expenseTotal = expenses.reduce((sum, e) => {
