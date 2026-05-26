@@ -9,7 +9,8 @@
       "Bash(PGPASSWORD=admin psql -U postgres -h 127.0.0.1 -p 5432 -l)",
       "Bash(PGPASSWORD=admin psql -U postgres -h 127.0.0.1 -p 5432 -d restaurant_db -c \"\\\\dt\")",
       "Bash(pm2 logs *)",
-      "Bash(sudo cat /root/Restaurant/.env)"
+      "Bash(sudo cat /root/Restaurant/.env)",
+      "Bash(git config *)"
     ]
   }
 }
