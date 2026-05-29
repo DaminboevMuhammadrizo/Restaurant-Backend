@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Query, Req, ParseUUIDPipe, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Query, Req, ParseUUIDPipe, UseGuards, Delete } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { OrderService } from './order.service';
 import { CreateOrderDto } from './dto/create-order.dto';
@@ -110,5 +110,15 @@ export class OrderController {
         @Req() req: Request
     ) {
         return this.orderService.changeStatus(orderId, status, req['user'] as JwtPayload);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Delete(':id')
+    delete(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.orderService.delete(id, req['user'] as JwtPayload);
     }
 }

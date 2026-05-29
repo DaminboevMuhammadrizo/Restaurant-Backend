@@ -458,4 +458,23 @@ export class UserService {
 
         return { id, succes: true }
     }
+
+
+    async deleteManager(id: string) {
+        const existsUser = await this.prisma.user.findUnique({ where: { id } })
+        if (!existsUser)
+            throw new NotFoundException('User not found !')
+
+        return await this.prisma.user.delete({ where: { id } })
+    }
+
+
+    async deleteUser(id: string, currentUser: JwtPayload) {
+        const existsUser = await this.prisma.user.findUnique({ where: { id } })
+        if (!existsUser)
+            throw new NotFoundException('User not found !')
+
+        await this.checkBranch(existsUser.branchId!, currentUser)
+        return await this.prisma.user.delete({ where: { id } })
+    }
 }

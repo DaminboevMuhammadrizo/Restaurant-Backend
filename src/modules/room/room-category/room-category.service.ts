@@ -57,6 +57,15 @@ export class RoomCategoryService {
             where: { id },
             data: { status: category.status === Status.ACTIVE ? Status.INACTIVE : Status.ACTIVE }
         })
+    }
 
+
+    async delete(id: string, currentUser: JwtPayload) {
+        const category = await this.prisma.roomCategory.findFirst({ where: { id } })
+        if (!category)
+            throw new NotFoundException('Category not found !')
+
+        await this.checkBranch(category.branchId, currentUser)
+        return await this.prisma.roomCategory.delete({ where: { id } })
     }
 }

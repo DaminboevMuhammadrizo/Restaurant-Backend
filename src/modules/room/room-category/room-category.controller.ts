@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
 import { AuthGuard } from 'src/common/guards/jwt-auth.guard';
@@ -67,5 +67,15 @@ export class RoomCategoryController {
         @Req() req: Request
     ) {
         return this.service.updateStatus(id, req['user'])
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Delete(':id')
+    delete(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.service.delete(id, req['user'])
     }
 }

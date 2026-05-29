@@ -426,6 +426,22 @@ export class OrderService {
     }
 
 
+    async delete(id: string, currentUser: JwtPayload) {
+        const order = await this.prisma.order.findUnique({ where: { id } });
+        if (!order) throw new NotFoundException('Order not found');
+
+        if (currentUser.role !== 'SUPERADMIN' && order.branchId !== currentUser.branchId)
+            throw new ForbiddenException('Access Denied!');
+
+        await this.prisma.$transaction(async (tx) => {
+            await tx.orderItem.deleteMany({ where: { orderId: id } });
+            await tx.order.delete({ where: { id } });
+        });
+
+        return { id, success: true };
+    }
+
+
     async updateOrderItemToCanceled(itemId: string, amount: number, currentUser: JwtPayload) {
 
         const item = await this.prisma.orderItem.findFirst({

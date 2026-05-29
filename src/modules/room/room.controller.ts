@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { RoomService } from './room.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
@@ -81,5 +81,15 @@ export class RoomController {
         @Req() req: Request
     ) {
         return this.service.updateStatus(id, req['user']);
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}, ${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN, UserRole.MANAGER)
+    @Delete(':id')
+    delete(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.service.delete(id, req['user']);
     }
 }

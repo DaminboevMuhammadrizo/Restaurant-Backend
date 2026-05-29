@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post, Query, Req, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ApiBearerAuth, ApiOperation, ApiQuery } from '@nestjs/swagger';
 import { UserRole } from '@prisma/client';
@@ -144,5 +144,25 @@ export class UserController {
     @Patch('status/:id')
     toggleUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
         return this.service.toggleUser(id, req['user'])
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.SUPERADMIN}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.SUPERADMIN)
+    @Delete('manager/:id')
+    deleteManager(@Param('id', ParseUUIDPipe) id: string) {
+        return this.service.deleteManager(id)
+    }
+
+
+    @ApiOperation({ summary: `${UserRole.MANAGER}` })
+    @ApiBearerAuth()
+    @UseGuards(AuthGuard, RolesGuard)
+    @Roles(UserRole.MANAGER)
+    @Delete(':id')
+    deleteUser(@Param('id', ParseUUIDPipe) id: string, @Req() req: Request) {
+        return this.service.deleteUser(id, req['user'])
     }
 }

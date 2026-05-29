@@ -130,4 +130,14 @@ export class RoomService {
             data: { status: room.status === Status.ACTIVE ? Status.INACTIVE : Status.ACTIVE }
         });
     }
+
+
+    async delete(id: string, currentUser: JwtPayload) {
+        const room = await this.prisma.room.findUnique({ where: { id } });
+        if (!room) throw new NotFoundException('Room not found!');
+
+        await this.checkBranch(room.branchId, currentUser);
+
+        return await this.prisma.room.delete({ where: { id } });
+    }
 }
